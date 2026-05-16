@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.core.database import SessionLocal
-from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
-from app.core.security import hash_password
+from backend.app.core.database import SessionLocal
+from backend.app.models.user import User
+from backend.app.schemas.user import UserCreate, UserResponse
+from backend.app.core.security import hash_password
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
