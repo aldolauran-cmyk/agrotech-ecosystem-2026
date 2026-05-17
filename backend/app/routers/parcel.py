@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.core.database import get_db
@@ -21,17 +21,31 @@ def list_parcels(
     return query.all()
 
 
-@router.post("", response_model=ParcelResponse)
+@router.post(
+    "",
+    response_model=ParcelResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear parcela",
+)
 def create_parcel(
     parcel: ParcelCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    owner_id = current_user.id
+    if current_user.role == "admin" and parcel.owner_id:
+        owner = db.query(User).filter(User.id == parcel.owner_id).first()
+        if not owner:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Owner not found",
+            )
+        owner_id = owner.id
     new_parcel = Parcel(
         name=parcel.name,
         location=parcel.location,
         soil_type=parcel.soil_type,
-        owner_id=current_user.id,
+        owner_id=owner_id,
     )
     db.add(new_parcel)
     db.commit()
