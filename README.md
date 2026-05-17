@@ -7,8 +7,8 @@ Monorepo para el proyecto AgroTech. Incluye el backend FastAPI y la app móvil F
 ```
 agrotech-ecosystem-2026/
 ├── backend/            # API REST (FastAPI, SQLAlchemy, JWT)
+│   └── main.py         # Entry point del backend
 ├── mobile/             # App móvil (Flutter)
-├── main.py             # Entry point del backend
 ├── .env.example        # Variables de entorno de referencia
 └── .gitignore
 ```
@@ -32,7 +32,7 @@ Configura `.env` con:
 
 ### Ejecutar
 ```bash
-uvicorn main:app --reload
+uvicorn backend.main:app --reload
 ```
 
 ### Swagger
