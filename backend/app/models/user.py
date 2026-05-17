@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from backend.app.core.database import Base
 
 class User(Base):
@@ -7,3 +8,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+    role = Column(String, default="farmer", nullable=False)
+
+    parcels = relationship("Parcel", back_populates="owner", cascade="all, delete-orphan")
