@@ -44,6 +44,9 @@ Disponible en `http://localhost:8000/docs`.
 - `GET /api/v1/parcels` → listar parcelas (admin ve todas)
 - `POST /api/v1/parcels` → crear parcela
 
+### Documentación detallada
+- [Backend](docs/backend.md)
+
 ## Mobile (Flutter)
 
 ### Requisitos
@@ -57,3 +60,6 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
 ```
 
 La app guarda el token en `flutter_secure_storage` y actualiza la lista de parcelas cada 15s.
+
+### Documentación detallada
+- [Mobile](docs/mobile.md)
