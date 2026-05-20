@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware  # <-- 1. Importamos CORS
 
 from backend.app.core.config import get_settings
 from backend.app.core.database import Base, engine
@@ -29,6 +30,15 @@ app = FastAPI(
     version=settings.version,
     description=settings.description,
     openapi_tags=tags_metadata,
+)
+
+# <-- 2. Añadimos el Middleware de CORS justo debajo de definir 'app'
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite que Chrome reciba datos desde cualquier puerto local
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite POST, GET, PUT, DELETE, etc.
+    allow_headers=["*"],  # Permite enviar el token en las cabeceras (Headers)
 )
 
 @app.on_event("startup")
