@@ -5,10 +5,11 @@ from backend.app.models.user import User
 from backend.app.schemas.user import RoleEnum, UserCreate, UserResponse
 from backend.app.core.security import hash_password, require_admin
 
-router = APIRouter(prefix="/users", tags=["Users"])
+# Corregido: Quitamos el prefijo de aquí porque ya se lo pones en main.py de manera global
+router = APIRouter(tags=["Users"])
 
 @router.post(
-    "/",
+    "/users", # <-- Ponemos la ruta directa aquí de forma explícita
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Crear usuario",

@@ -7,10 +7,11 @@ from backend.app.models.parcel import Parcel
 from backend.app.models.user import User
 from backend.app.schemas.parcel import ParcelCreate, ParcelResponse
 
-router = APIRouter(prefix="/parcels", tags=["Parcels"])
+# Corregido: Quitamos el prefijo local para evitar la duplicación con main.py
+router = APIRouter(tags=["Parcels"])
 
 
-@router.get("", response_model=list[ParcelResponse])
+@router.get("/parcels", response_model=list[ParcelResponse])
 def list_parcels(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -22,7 +23,7 @@ def list_parcels(
 
 
 @router.post(
-    "",
+    "/parcels",
     response_model=ParcelResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Crear parcela",

@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
 import '../utils/api_constants.dart';
 import 'token_storage.dart';
 
@@ -42,5 +40,40 @@ class ApiClient {
 
   List<dynamic> decodeJsonList(http.Response response) {
     return jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
+  }
+
+  Future<bool> login(String username, String password) async {
+    try {
+      final response = await postForm('/auth/login', {
+        'username': username,
+        'password': password,
+      });
+
+      if (response.statusCode == 200) {
+        final data = decodeJson(response);
+        final token = data['access_token'] as String;
+        
+        await _tokenStorage.saveToken(token);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error en el proceso de login: $e');
+      return false;
+    }
+  }
+
+  Future<List<dynamic>?> getParcels() async {
+    try {
+      final response = await get('/parcels', withAuth: true);
+
+      if (response.statusCode == 200) {
+        return decodeJsonList(response);
+      }
+      return null;
+    } catch (e) {
+      print('Error al obtener parcelas: $e');
+      return null;
+    }
   }
 }

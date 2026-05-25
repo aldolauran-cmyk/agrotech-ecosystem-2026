@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import get_settings
 from backend.app.core.database import get_db
 from backend.app.core.security import authenticate_user, create_access_token
-from backend.app.schemas.auth import Token
+# Corregido: Importamos Token desde el esquema de usuarios donde está consolidado
+from backend.app.schemas.user import Token
 
 router = APIRouter(tags=["Auth"])
 settings = get_settings()
@@ -20,6 +21,9 @@ settings = get_settings()
     response_description="JWT válido para consumir la API",
 )
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # El "Puente de Emergencia" se remueve porque el seed_admin ya registra 
+    # correctamente al administrador en la base de datos limpia.
+    
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -27,6 +31,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+        
     access_token = create_access_token(
         data={"sub": user.username, "role": user.role},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
