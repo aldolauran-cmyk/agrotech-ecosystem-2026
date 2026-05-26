@@ -75,12 +75,10 @@ Mobile
 Estructura base inicializada en la carpeta simulation_godot/ de acuerdo a los requerimientos del Monorepo. Lógica visual del Gemelo Digital programada para el Hito 2.
 
 
-4. Guarda el archivo presionando **`Ctrl + S`** en tu teclado. (Verifica bajando con la rueda del ratón que ahora sí se vea todo completo hasta la sección de Godot).
+
 
 ---
 
-
-Ahora que el archivo está completo, vuelve a tu terminal de abajo y ejecuta estos tres comandos finales uno por uno para guardarlo en internet:
 
 ```powershell
 git add .
