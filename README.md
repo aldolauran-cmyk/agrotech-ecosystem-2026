@@ -19,7 +19,7 @@ agrotech-ecosystem-2026/
 ### Instalación
 ```bash
 python -m venv venv
-source venv/bin/activate  # En Windows: .\venv\Scripts\activate
+source venv/bin/activate  
 pip install -r backend/app/requirements.txt
 cp .env.example .env
 
@@ -79,7 +79,6 @@ Estructura base inicializada en la carpeta simulation_godot/ de acuerdo a los re
 
 ---
 
-### Paso 2: Subir los cambios reales a GitHub
 
 Ahora que el archivo está completo, vuelve a tu terminal de abajo y ejecuta estos tres comandos finales uno por uno para guardarlo en internet:
 
