@@ -20,3 +20,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # 🌿 AQUÍ AGREGAREMOS IMAGENES LOCALES DE FORMA CORRECTA
+  assets:
+    - assets/logoagrotech.png
+    - assets/logotractor.png
+    - assets/logoparcela.png

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'screens/login_screen.dart';
 import 'screens/parcel_list_screen.dart';
 import 'services/token_storage.dart';
@@ -16,8 +15,10 @@ class AgroTechApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AgroTech',
+      debugShowCheckedModeBanner: false, 
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        scaffoldBackgroundColor: const Color(0xFFF7F9F6),
         useMaterial3: true,
       ),
       home: const _SessionGate(),
