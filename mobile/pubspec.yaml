@@ -12,6 +12,7 @@ dependencies:
   http: ^1.2.1
   flutter_secure_storage: ^10.3.0
   cupertino_icons: ^1.0.6
+  fl_chart: ^0.66.0
 
 dev_dependencies:
   flutter_test:
@@ -20,8 +21,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # 🌿 AQUÍ AGREGAREMOS IMAGENES LOCALES DE FORMA CORRECTA
+  # AQUÍ AGREGAMOS IMAGENES LOCALES
   assets:
     - assets/logoagrotech.png
-    - assets/logotractor.png
-    - assets/logoparcela.png
+    - assets/logotractor1.png
+    - assets/logoparcela1.png

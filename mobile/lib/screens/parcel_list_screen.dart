@@ -4,6 +4,7 @@ import '../models/parcel.dart';
 import '../services/api_client.dart';
 import '../services/token_storage.dart';
 import 'login_screen.dart';
+import 'parcel_detail_screen.dart';
 
 class ParcelListScreen extends StatefulWidget {
   const ParcelListScreen({super.key});
@@ -18,6 +19,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
   Timer? _refreshTimer;
   bool _isLoading = true;
   List<Parcel> _parcels = [];
+  String _selectedFilter = 'Todas'; // Control de filtro rápido ('Todas' o '⚠️ Con Estrés')
 
   @override
   void initState() {
@@ -95,26 +97,147 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     );
   }
 
+  // --- COMPONENTE: MENÚ LATERAL (DRAWER) ---
+  Widget _buildNavigationDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: const Color(0xFFF7F9F6),
+      child: Column(
+        children: [
+          const UserAccountsDrawerHeader(
+            decoration: BoxDecoration(color: Color(0xFF1B4314)),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Color(0xFFE2E7DF),
+              child: Icon(Icons.person_rounded, size: 40, color: Color(0xFF1B4314)),
+            ),
+            accountName: Text(
+              'Piero Andres Torres', 
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            accountEmail: Text(
+              'piero.torres@unmsm.edu.pe', 
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.eco_rounded, color: Color(0xFF1B4314)),
+            title: const Text('Mis Parcelas', style: TextStyle(fontWeight: FontWeight.bold)),
+            selected: true,
+            selectedTileColor: const Color(0x80E2E7DF),
+            onTap: () => Navigator.pop(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.analytics_rounded, color: Colors.black54),
+            title: const Text('Reportes Globales'),
+            onTap: () => Navigator.pop(context),
+          ),
+          const Divider(height: 20, thickness: 0.5),
+          const Spacer(),
+          ListTile(
+            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            onTap: () {
+              Navigator.pop(context);
+              _logout();
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  // --- COMPONENTE: CHIPS DE FILTRADO ---
+  Widget _buildFilterChips() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0),
+      child: Row(
+        children: [
+          FilterChip(
+            label: const Text('Todas'),
+            selected: _selectedFilter == 'Todas',
+            selectedColor: const Color(0xFFD2D9CE),
+            checkmarkColor: const Color(0xFF1B4314),
+            labelStyle: TextStyle(
+              color: _selectedFilter == 'Todas' ? const Color(0xFF1B4314) : Colors.black87,
+              fontWeight: _selectedFilter == 'Todas' ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+            ),
+            onSelected: (bool selected) {
+              setState(() { _selectedFilter = 'Todas'; });
+            },
+          ),
+          const SizedBox(width: 10),
+          FilterChip(
+            label: const Text('⚠️ Con Estrés'),
+            selected: _selectedFilter == '⚠️ Con Estrés',
+            selectedColor: const Color(0xFFFADBD8),
+            checkmarkColor: const Color(0xFF7B241C),
+            labelStyle: TextStyle(
+              color: _selectedFilter == '⚠️ Con Estrés' ? const Color(0xFF7B241C) : Colors.black87,
+              fontWeight: _selectedFilter == '⚠️ Con Estrés' ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+            ),
+            onSelected: (bool selected) {
+              setState(() { _selectedFilter = '⚠️ Con Estrés'; });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- COMPONENTE: CÁPSULA ESTILIZADA DE SENSORES IOT ---
+  Widget _buildVisualSensorBadge(IconData icon, String value, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha((0.75 * 255).round()),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      width: 76, 
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: const Color(0xFF1B4314), size: 18),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            style: TextStyle(fontSize: 8.5, color: Colors.grey[800], fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Filtrado dinámico local de la lista en memoria
+    final filteredParcels = _parcels.where((parcel) {
+      if (_selectedFilter == '⚠️ Con Estrés') return parcel.hasWaterStress;
+      return true;
+    }).toList();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9F6), // Fondo crema global
+      backgroundColor: const Color(0xFFF7F9F6), 
+      drawer: _buildNavigationDrawer(context), // Enlace automático con el botón del menú
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Color(0xFF1B4314), size: 28),
-          onPressed: () {},
-        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🌿 MINI LOGO CIRCULAR LOCAL EN EL APPBAR
             Container(
               width: 24,
               height: 24,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 image: DecorationImage(
-                  image: AssetImage('assets/logoparcela.png'), // 👈 Cambiado a asset local
+                  image: AssetImage('assets/logoparcela1.png'), 
                   fit: BoxFit.cover,
                 ),
               ),
@@ -122,11 +245,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
             const SizedBox(width: 8),
             const Text(
               'Mis Parcelas',
-              style: TextStyle(
-                color: Color(0xFF1B4314),
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
+              style: TextStyle(color: Color(0xFF1B4314), fontWeight: FontWeight.bold, fontSize: 22),
             ),
           ],
         ),
@@ -144,135 +263,194 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
       body: RefreshIndicator(
         onRefresh: _fetchParcels,
         color: const Color(0xFF3B6043),
-        child: _isLoading && _parcels.isEmpty
-            ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B6043))))
-            : _parcels.isEmpty
-                ? ListView(
-                    children: [
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                      Center(
-                        child: Column(
+        child: Column(
+          children: [
+            _buildFilterChips(), // Renderiza la barra horizontal de filtros superiores
+            Expanded(
+              child: _isLoading && _parcels.isEmpty
+                  ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B6043))))
+                  : filteredParcels.isEmpty
+                      ? ListView(
                           children: [
-                            Icon(Icons.eco_outlined, size: 64, color: Colors.grey[400]),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No tienes parcelas registradas aún.',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                            SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+                            Center(
+                              child: Column(
+                                children: [
+                                  Icon(Icons.eco_outlined, size: 64, color: Colors.grey[400]),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _selectedFilter == '⚠️ Con Estrés' 
+                                        ? 'No hay parcelas con estrés hídrico.'
+                                        : 'No tienes parcelas registradas aún.',
+                                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                        ),
-                      ),
-                    ],
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-                    itemCount: _parcels.length,
-                    itemBuilder: (context, index) {
-                      final parcel = _parcels[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 24),
-                        height: 155, // Altura exacta para contener los textos y la barra inferior
-                        child: Stack(
-                          clipBehavior: Clip.none, // Crucial: Permite que el tractor sobresalga
-                          children: [
-                            // 💳 Tarjeta Principal de Fondo
-                            Positioned.fill(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE2E7DF), // El color crema/verdoso de tu imagen
-                                  borderRadius: BorderRadius.circular(24),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                          itemCount: filteredParcels.length,
+                          itemBuilder: (context, index) {
+                            final parcel = filteredParcels[index];
+                            return GestureDetector(
+                              onTap: () {
+                              // 📊 Navegación real y directa hacia la pantalla de detalle
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ParcelDetailScreen(parcel: parcel),
                                 ),
-                                padding: const EdgeInsets.only(left: 20, top: 16, right: 140), // Espacio para el tractor gigante
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 20),
+                                child: Stack(
+                                  clipBehavior: Clip.none, 
                                   children: [
-                                    Text(
-                                      parcel.name,
-                                      style: const TextStyle(
-                                        fontSize: 21,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1B4314), // Tu verde corporativo oscuro
+                                    // 💳 Tarjeta Principal Premium de Fondo (Flexible)
+                                    Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE2E7DF), 
+                                        borderRadius: BorderRadius.circular(24),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.03),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.only(left: 20, top: 18, right: 130, bottom: 48), 
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            parcel.name,
+                                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1B4314)),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.location_on_rounded, size: 15, color: Color(0xFF556B52)),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  parcel.location,
+                                                  style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.layers_rounded, size: 15, color: Color(0xFF556B52)),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  'Suelo: ${parcel.soilType}',
+                                                  style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          
+                                          const SizedBox(height: 12),
+                                          
+                                          // 💧 🧪 🌡️ CONTENEDORES DE TELEMETRÍA IOT
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              _buildVisualSensorBadge(Icons.water_drop_rounded, '${parcel.moisture}%', 'Humedad'),
+                                              _buildVisualSensorBadge(Icons.science_rounded, '${parcel.ph}', 'pH Suelo'),
+                                              _buildVisualSensorBadge(Icons.thermostat_rounded, '${parcel.temperature}°C', 'Temp'),
+                                            ],
+                                          ),
+                                          
+                                          // ⚠️ BANNER DE ALERTA DE ESTRÉS HÍDRICO REDISEÑADO
+                                          if (parcel.hasWaterStress) ...[
+                                            const SizedBox(height: 12),
+                                            Container(
+                                              width: double.infinity,
+                                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFFADBD8), 
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(color: const Color(0xFFE6B0AA), width: 1),
+                                              ),
+                                              child: const Row(
+                                                children: [
+                                                  Icon(Icons.warning_amber_rounded, color: Color(0xFFC0392B), size: 18),
+                                                  SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Estrés Hídrico Detectado',
+                                                      style: TextStyle(color: Color(0xFF922B21), fontWeight: FontWeight.bold, fontSize: 11.5, letterSpacing: 0.2),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.location_on_outlined, size: 16, color: Colors.black54),
-                                        const SizedBox(width: 6),
-                                        Expanded(
+                                    
+                                    // 🏁 Barra Inferior de Estado Tracker
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: parcel.hasWaterStress ? const Color(0xFFE5CDC8) : const Color(0xFFD2D9CE), 
+                                          borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+                                        ),
+                                        child: Center(
                                           child: Text(
-                                            parcel.location,
-                                            style: const TextStyle(color: Colors.black87, fontSize: 14),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            parcel.hasWaterStress ? 'STATUS: ATTENTION REQUIRED' : 'STATUS: ACTIVE', 
+                                            style: TextStyle(
+                                              color: parcel.hasWaterStress ? const Color(0xFF7B241C) : const Color(0xFF1B4314),
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 11,
+                                              letterSpacing: 0.8,
+                                            ),
                                           ),
                                         ),
-                                      ],
+                                      ),
                                     ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.layers_outlined, size: 16, color: Colors.black54),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            'Suelo: ${parcel.soilType}',
-                                            style: const TextStyle(color: Colors.black87, fontSize: 14),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
+
+                                    // 🚜 ILUSTRACIÓN DEL TRACTOR GIGANTE
+                                    Positioned(
+                                      right: -8, 
+                                      top: -18,   
+                                      bottom: 38, 
+                                      child: Image.asset(
+                                        'assets/logotractor1.png', 
+                                        fit: BoxFit.contain,
+                                        width: 135, 
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                            
-                            // 🏁 Barra Inferior de Estado ("Status: Active")
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: Container(
-                                height: 30,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFD2D9CE), // Tono ligeramente más oscuro para la base
-                                  borderRadius: BorderRadius.only(
-                                    bottomLeft: Radius.circular(24),
-                                    bottomRight: Radius.circular(24),
-                                  ),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    'Status: Active',
-                                    style: TextStyle(
-                                      color: Color(0xFF1B4314),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // 🚜 ILUSTRACIÓN LOCAL DEL TRACTOR GIGANTE (Optimizado con BoxFit.contain)
-                            Positioned(
-                              right: -10, // Sobresale levemente a la derecha
-                              top: -20,   // Sobresale hacia arriba rompiendo el contenedor
-                              bottom: 12,  // Evita pisar la barra de estado inferior
-                              child: Image.asset(
-                                'assets/logotractor.png', // 👈 Cambiado a asset local
-                                fit: BoxFit.contain,
-                                width: 150, // Forzamos el ancho para dar un aspecto imponente
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

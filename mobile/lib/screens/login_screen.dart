@@ -72,56 +72,57 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F9F6), // 🎨 Fondo crema exacto de la imagen
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Center(
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400), // Optimización para centrado en Web
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // 🌿 LOGO AVANZADO PREMIUM (Carga local desde Assets)
-                    Container(
-                      width: 160,
-                      height: 160,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: AssetImage(
-                            'assets/logoagrotech.png', // 👈 CAMBIADO A ASSETIMAGE LOCAL
-                          ), 
-                          fit: BoxFit.contain, // Ajuste óptimo para vectores circulares sin recortes
-                        ),
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFFF7F9F6),
+    body: SafeArea(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Align(
+          alignment: Alignment.topCenter, 
+          child: Padding(
+            padding: const EdgeInsets.only(left: 32.0, right: 32.0, top: 100.0, bottom: 32.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400), 
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // 🌿 LOGO
+                  Container(
+                    width: 160,
+                    height: 160,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image: AssetImage('assets/logoagrotech.png'), 
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    // Título principal con el tono verde bosque oscuro
-                    const Text(
-                      'AgroTech',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B4314), // Verde oscuro de la imagen
-                        letterSpacing: 0.5,
-                      ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Título principal con el tono verde bosque oscuro
+                  const Text(
+                    'AgroTech',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B4314),
+                      letterSpacing: 0.5,
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: 18, 
-                        color: Colors.grey, 
-                        fontWeight: FontWeight.w500
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Login',
+                    style: TextStyle(
+                      fontSize: 18, 
+                      color: Colors.grey, 
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 40),
-
+                  ),
+                  const SizedBox(height: 40),
+                  
                     // 👤 Campo de Entrada: Usuario
                     const Align(
                       alignment: Alignment.centerLeft,
@@ -194,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF3B6043), // Verde exacto mate de la imagen
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFF3B6043).withOpacity(0.6),
+                          disabledBackgroundColor: const Color(0x993B6043),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(27), // Bordes perfectos tipo píldora
                           ),
