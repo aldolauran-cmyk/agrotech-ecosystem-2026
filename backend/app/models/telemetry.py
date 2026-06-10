@@ -18,4 +18,4 @@ class Telemetry(Base):
 
     parcel_id = Column(Integer, ForeignKey("parcels.id"), nullable=False)
 
-    parcel = relationship("Parcel")
+    parcel = relationship("Parcel", back_populates="telemetries")

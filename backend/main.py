@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import get_settings
 from backend.app.core.database import Base, engine
 from backend.app.core.seed import seed_admin
+from backend.app.core.mqtt import start_mqtt_listener, stop_mqtt_listener
 import backend.app.models.parcel
 import backend.app.models.user
 import backend.app.models.telemetry  # Aseguramos la importación del modelo de telemetría
@@ -38,8 +39,11 @@ async def lifespan(app: FastAPI):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     seed_admin()
+    # Encendemos el oyente MQTT en segundo plano
+    start_mqtt_listener()
     yield
-    # Aquí iría el código de limpieza al apagar el servidor si fuera necesario
+    # Apagamos el oyente MQTT de forma segura
+    stop_mqtt_listener()
 
 app = FastAPI(
     title=settings.project_name,

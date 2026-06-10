@@ -14,6 +14,11 @@ class ParcelResponse(BaseModel):
     location: str
     soil_type: str
     owner_id: int
+    moisture: float
+    ph: float
+    temperature: float
+    has_water_stress: bool
 
     class Config:
         from_attributes = True
+
