@@ -115,6 +115,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     final nameController = TextEditingController();
     final locationController = TextEditingController();
     final soilTypeController = TextEditingController();
+    final ownerIdController = TextEditingController();
 
     showDialog(
       context: context,
@@ -140,6 +141,33 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                   controller: soilTypeController,
                   decoration: const InputDecoration(labelText: 'Tipo de Suelo'),
                 ),
+                // Campo exclusivo para Admin: asignar parcela a otro usuario
+                if (_userRole == 'admin') ...[
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.admin_panel_settings_rounded, size: 16, color: Color(0xFF1B4314)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Opciones de Administrador',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: ownerIdController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Asignar a Usuario (ID) — opcional',
+                      helperText: 'Dejar vacío para asignar al admin',
+                      helperStyle: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -154,6 +182,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                 final name = nameController.text.trim();
                 final location = locationController.text.trim();
                 final soilType = soilTypeController.text.trim();
+                final ownerIdText = ownerIdController.text.trim();
 
                 if (name.isEmpty || location.isEmpty || soilType.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -162,12 +191,27 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                   return;
                 }
 
+                // Construir el payload base
+                final Map<String, dynamic> payload = {
+                  'name': name,
+                  'location': location,
+                  'soil_type': soilType,
+                };
+
+                // Si es admin y especificó un owner_id, añadirlo al payload
+                if (_userRole == 'admin' && ownerIdText.isNotEmpty) {
+                  final parsedId = int.tryParse(ownerIdText);
+                  if (parsedId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('El ID de usuario debe ser un número válido')),
+                    );
+                    return;
+                  }
+                  payload['owner_id'] = parsedId;
+                }
+
                 try {
-                  final response = await _apiClient.postJson('/parcels', {
-                    'name': name,
-                    'location': location,
-                    'soil_type': soilType,
-                  });
+                  final response = await _apiClient.postJson('/parcels', payload);
 
                   if (response.statusCode == 201) {
                     if (mounted) {
@@ -175,6 +219,12 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                       _fetchParcels();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Parcela registrada con éxito')),
+                      );
+                    }
+                  } else if (response.statusCode == 404) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Usuario destino no encontrado. Verifica el ID.')),
                       );
                     }
                   } else {
@@ -236,7 +286,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => GlobalReportsScreen(parcels: _parcels),
+                  builder: (_) => GlobalReportsScreen(initialParcels: _parcels),
                 ),
               );
             },
