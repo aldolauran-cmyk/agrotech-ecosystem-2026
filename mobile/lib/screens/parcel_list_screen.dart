@@ -336,6 +336,162 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     );
   }
 
+  void _showEditParcelDialog(Parcel parcel) {
+    final nameController = TextEditingController(text: parcel.name);
+    final locationController = TextEditingController(text: parcel.location);
+    final soilTypeController = TextEditingController(text: parcel.soilType);
+    int? selectedOwnerId = parcel.ownerId;
+
+    final assignableUsers = _allUsers.where((u) => u['role'] != 'admin').toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'Editar Parcela',
+                style: TextStyle(color: Color(0xFF1B4314), fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Nombre de la Parcela'),
+                    ),
+                    TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(labelText: 'Ubicación'),
+                    ),
+                    TextField(
+                      controller: soilTypeController,
+                      decoration: const InputDecoration(labelText: 'Tipo de Suelo'),
+                    ),
+                    if (_userRole == 'admin') ...[
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.admin_panel_settings_rounded, size: 16, color: Color(0xFF1B4314)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Reasignar Dueño',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      assignableUsers.isEmpty
+                          ? Text(
+                              'No hay usuarios a quién reasignar.',
+                              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                            )
+                          : DropdownButtonFormField<int?>(
+                              value: selectedOwnerId,
+                              decoration: const InputDecoration(
+                                labelText: 'Dueño de la parcela',
+                                prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
+                              ),
+                              items: [
+                                const DropdownMenuItem<int?>(
+                                  value: null,
+                                  child: Text('Admin (yo mismo)', style: TextStyle(color: Colors.grey)),
+                                ),
+                                ...assignableUsers.map((u) {
+                                  final role = u['role'] as String? ?? '';
+                                  return DropdownMenuItem<int?>(
+                                    value: u['id'] as int,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          role == 'farmer' ? Icons.agriculture_rounded : Icons.visibility_rounded,
+                                          size: 16,
+                                          color: role == 'farmer' ? const Color(0xFF2E86C1) : const Color(0xFF8E44AD),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text('${u['username']} '),
+                                        Text('(${role.toUpperCase()})',
+                                            style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                              onChanged: (val) => setDialogState(() => selectedOwnerId = val),
+                            ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6043)),
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    final location = locationController.text.trim();
+                    final soilType = soilTypeController.text.trim();
+
+                    if (name.isEmpty || location.isEmpty || soilType.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Por favor, completa todos los campos')),
+                      );
+                      return;
+                    }
+
+                    final Map<String, dynamic> payload = {
+                      'name': name,
+                      'location': location,
+                      'soil_type': soilType,
+                    };
+
+                    if (_userRole == 'admin' && selectedOwnerId != null) {
+                      payload['owner_id'] = selectedOwnerId;
+                    }
+
+                    try {
+                      final response = await _apiClient.updateParcel(parcel.id, payload);
+                      if (response.statusCode == 200) {
+                        if (mounted) {
+                          Navigator.pop(context);
+                          _fetchParcels();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Parcela actualizada con éxito')),
+                          );
+                        }
+                      } else {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Error al actualizar parcela')),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error de conexión')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
 
   // --- COMPONENTE: MENÚ LATERAL (DRAWER) ---
   Widget _buildNavigationDrawer(BuildContext context) {
@@ -595,11 +751,31 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            parcel.name,
-                                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1B4314)),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  parcel.name,
+                                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1B4314)),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              if (_userRole != 'viewer')
+                                                InkWell(
+                                                  onTap: () => _showEditParcelDialog(parcel),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white.withOpacity(0.5),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: const Icon(Icons.edit_rounded, size: 20, color: Color(0xFF3B6043)),
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                           const SizedBox(height: 6),
                                           Row(
