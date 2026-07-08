@@ -129,7 +129,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     return user != null ? user['username'] as String : 'ID $ownerId';
   }
 
-  Future<void> _confirmDeleteParcel(Parcel parcel) async {
+  Future<bool> _confirmDeleteParcel(Parcel parcel) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -158,14 +158,17 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
             SnackBar(content: Text('Parcela "${parcel.name}" eliminada')),
           );
         }
+        return true;
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No se pudo eliminar la parcela')),
           );
         }
+        return false;
       }
     }
+    return false;
   }
 
   void _showCreateParcelDialog() {
