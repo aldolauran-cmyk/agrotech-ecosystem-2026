@@ -17,7 +17,8 @@ def list_parcels(
     current_user: User = Depends(get_current_user),
 ):
     query = db.query(Parcel)
-    if current_user.role != "admin":
+    # Solo el farmer ve filtradas sus parcelas. Admin y Viewer ven todo.
+    if current_user.role == "farmer":
         query = query.filter(Parcel.owner_id == current_user.id)
     return query.all()
 

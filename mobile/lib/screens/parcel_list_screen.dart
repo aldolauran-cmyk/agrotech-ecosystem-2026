@@ -365,8 +365,8 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
             selectedTileColor: const Color(0x80E2E7DF),
             onTap: () => Navigator.pop(context),
           ),
-          // Reportes Globales exclusivo para Administradores
-          if (_userRole == 'admin') ...[
+          // Reportes Globales para Administradores y Viewers
+          if (_userRole != 'farmer') ...[
             ListTile(
               leading: const Icon(Icons.analytics_rounded, color: Colors.black54),
               title: const Text('Reportes Globales'),
