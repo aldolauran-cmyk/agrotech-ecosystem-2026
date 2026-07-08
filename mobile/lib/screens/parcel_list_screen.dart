@@ -362,19 +362,22 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
             selectedTileColor: const Color(0x80E2E7DF),
             onTap: () => Navigator.pop(context),
           ),
-          ListTile(
-            leading: const Icon(Icons.analytics_rounded, color: Colors.black54),
-            title: const Text('Reportes Globales'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => GlobalReportsScreen(initialParcels: _parcels),
-                ),
-              );
-            },
-          ),
+          // Reportes Globales exclusivo para Administradores
+          if (_userRole == 'admin') ...[
+            ListTile(
+              leading: const Icon(Icons.analytics_rounded, color: Colors.black54),
+              title: const Text('Reportes Globales'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GlobalReportsScreen(initialParcels: _parcels),
+                  ),
+                );
+              },
+            ),
+          ],
           // Opción exclusiva para Administradores
           if (_userRole == 'admin') ...[
             ListTile(
@@ -555,7 +558,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                           itemCount: filteredParcels.length,
                           itemBuilder: (context, index) {
                             final parcel = filteredParcels[index];
-                            return GestureDetector(
+                            Widget card = GestureDetector(
                               onTap: () {
                               // 📊 Navegación real y directa hacia la pantalla de detalle
                               Navigator.push(
@@ -723,13 +726,33 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                 ),
                               ),
                             );
+
+                            if (_userRole != 'viewer') {
+                              return Dismissible(
+                                key: ValueKey('parcel_${parcel.id}'),
+                                direction: DismissDirection.endToStart,
+                                confirmDismiss: (direction) => _confirmDeleteParcel(parcel),
+                                background: Container(
+                                  margin: const EdgeInsets.only(bottom: 20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                                  child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 32),
+                                ),
+                                child: card,
+                              );
+                            }
+                            return card;
                           },
                         ),
              ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: _userRole == 'viewer' ? null : FloatingActionButton(
         backgroundColor: const Color(0xFF3B6043),
         onPressed: _showCreateParcelDialog,
         child: const Icon(Icons.add, color: Colors.white),

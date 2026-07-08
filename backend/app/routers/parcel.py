@@ -33,6 +33,12 @@ def create_parcel(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if current_user.role == "viewer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Viewers cannot create parcels",
+        )
+
     owner_id = current_user.id
     if current_user.role == "admin" and parcel.owner_id:
         owner = db.query(User).filter(User.id == parcel.owner_id).first()
