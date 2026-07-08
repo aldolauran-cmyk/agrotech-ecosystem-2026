@@ -109,6 +109,24 @@ El simulador provee telemetría constante a las parcelas activas.
 
 ---
 
+## 🌐 Opciones de Arquitectura IoT (Cloud vs Edge)
+
+Este ecosistema soporta dos modos de funcionamiento para adaptarse a las necesidades reales de conectividad en zonas agrícolas:
+
+### 1. Modo Nube (Cloud Computing) - *Configuración por Defecto*
+Ideal para demostraciones académicas o parcelas con conexión a internet (3G/4G/Starlink). 
+- **Ventaja:** No requiere instalar nada extra. Se usa el broker público `broker.hivemq.com`.
+- **Configuración:** En `iot_industrial/main_sim.py`, la variable debe estar así: `MQTT_BROKER = "broker.hivemq.com"`
+
+### 2. Modo Desconectado (Edge Computing)
+Diseñado para zonas rurales **sin acceso a internet**. El sistema funciona en una red local (ej. los sensores transmiten por radio a una Raspberry Pi en la granja).
+- **Ventaja:** Privacidad total y funcionamiento 100% offline.
+- **Configuración:** 
+  1. Instalar [Mosquitto MQTT Broker](https://mosquitto.org/download/) en la computadora o servidor local.
+  2. En `iot_industrial/main_sim.py`, cambiar el código a: `MQTT_BROKER = "localhost"`
+
+---
+
 ## 📂 Estructura del Monorepo
 
 ```text
