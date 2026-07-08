@@ -192,6 +192,82 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 
+  void _showEditPasswordDialog(Map<String, dynamic> user) {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Restablecer Contraseña',
+            style: TextStyle(color: Color(0xFF1B4314), fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Nueva contraseña para ${user['username']}:'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña',
+                  prefixIcon: Icon(Icons.lock_reset_rounded),
+                  helperText: 'Mínimo 6 caracteres',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6043)),
+              onPressed: () async {
+                final pwd = passwordController.text.trim();
+                if (pwd.length < 6) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('La contraseña debe tener al menos 6 caracteres')),
+                  );
+                  return;
+                }
+                
+                try {
+                  final response = await _apiClient.updateUserPassword(user['id'] as int, pwd);
+                  if (response.statusCode == 200) {
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Contraseña de ${user['username']} actualizada')),
+                      );
+                    }
+                  } else {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Error al actualizar contraseña')),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Error de conexión')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _confirmDeleteUser(Map<String, dynamic> user) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -335,17 +411,35 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                         ),
                                       ],
                                     ),
+                                    if (role == 'farmer') ...[
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.eco_rounded, size: 12, color: Color(0xFF556B52)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Parcelas asignadas: ${user['parcel_count'] ?? 0}',
+                                            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
-                              // Botón eliminar (no disponible para admins)
-                              if (!isAdmin)
+                              // Botones de acción (no disponibles para admins)
+                              if (!isAdmin) ...[
+                                IconButton(
+                                  icon: const Icon(Icons.lock_reset_rounded, color: Color(0xFF3B6043)),
+                                  tooltip: 'Cambiar contraseña',
+                                  onPressed: () => _showEditPasswordDialog(user),
+                                ),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
                                   tooltip: 'Eliminar usuario',
                                   onPressed: () => _confirmDeleteUser(user),
-                                )
-                              else
+                                ),
+                              ] else
                                 const Padding(
                                   padding: EdgeInsets.all(12.0),
                                   child: Icon(Icons.shield_rounded, color: Color(0xFF1B4314), size: 20),

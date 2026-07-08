@@ -11,3 +11,7 @@ class User(Base):
     role = Column(String, default="farmer", nullable=False)
 
     parcels = relationship("Parcel", back_populates="owner", cascade="all, delete-orphan")
+
+    @property
+    def parcel_count(self) -> int:
+        return len(self.parcels)

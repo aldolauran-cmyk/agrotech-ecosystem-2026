@@ -14,11 +14,15 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=6, max_length=128)
     role: RoleEnum = Field(default=RoleEnum.farmer)
 
+class PasswordUpdate(BaseModel):
+    new_password: str = Field(min_length=6, max_length=128)
+
 
 class UserResponse(BaseModel):
     id: int
     username: str
     role: RoleEnum
+    parcel_count: Optional[int] = None
 
     # Actualizado al estándar de Pydantic v2
     model_config = {

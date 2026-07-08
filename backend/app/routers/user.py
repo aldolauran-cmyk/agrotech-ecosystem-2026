@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.app.core.database import get_db
 from backend.app.models.user import User
-from backend.app.schemas.user import RoleEnum, UserCreate, UserResponse
+from backend.app.schemas.user import RoleEnum, UserCreate, UserResponse, PasswordUpdate
 from backend.app.core.security import hash_password, require_admin, get_current_user
 
 # Quitamos el prefijo de aquí porque ya se lo pones en main.py de manera global
@@ -102,3 +102,24 @@ def delete_user(
         )
     db.delete(user)
     db.commit()
+
+@router.patch(
+    "/users/{user_id}/password",
+    status_code=status.HTTP_200_OK,
+    summary="Actualizar contraseña de usuario (solo admin)",
+)
+def update_user_password(
+    user_id: int,
+    payload: PasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    user.password = hash_password(payload.new_password)
+    db.commit()
+    return {"message": "Password updated successfully"}

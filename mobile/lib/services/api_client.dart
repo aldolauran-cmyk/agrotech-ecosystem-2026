@@ -111,6 +111,8 @@ class ApiClient {
     } catch (e) {
       return null;
     }
+  Future<http.Response> updateUserPassword(int userId, String newPassword) async {
+    return patchJson('/users/$userId/password', {'new_password': newPassword});
   }
 
   Future<http.Response> createParcel(Map<String, dynamic> body) async {
