@@ -46,6 +46,20 @@ El simulador y el backend necesitan comunicarse a través de un servidor MQTT.
      ```cmd
      .venv\Scripts\activate.bat
      ```
+
+      💡 Nota de resolución de problemas: Si al intentar activar el entorno en PowerShell te aparece un error en letras rojas que indica que la ejecución de scripts está deshabilitada en este sistema, Windows ha bloqueado el archivo por seguridad. Para solucionarlo permanentemente:
+
+        Abre una terminal de PowerShell como Administrador (clic derecho -> Ejecutar como administrador).
+
+        Ejecuta el comando:
+         ```
+         Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+         ```
+
+        Escribe S y presiona Enter. Cierra esa ventana y vuelve a tu terminal normal.
+
+
+     
 4. Instala todas las dependencias requeridas (FastAPI, Uvicorn, SQLAlchemy, Pydantic, Passlib, Cryptography, Paho-MQTT, Requests):
    ```powershell
    pip install -r backend/app/requirements.txt requests
@@ -99,5 +113,5 @@ El simulador transmitirá datos de telemetría por MQTT.
    ```
 4. Inicia sesión en la aplicación móvil usando las credenciales del Administrador:
    * **Usuario**: `admin`
-   * **Contraseña**: `admin`
+   * **Contraseña**: `admin123`
 5. ¡Listo! La lista de parcelas cargará y verás en tiempo real (actualización cada 15s) los datos de humedad, pH y temperatura simulados.
