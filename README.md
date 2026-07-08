@@ -123,7 +123,7 @@ Diseñado para zonas rurales **sin acceso a internet**. El sistema funciona en u
 - **Ventaja:** Privacidad total y funcionamiento 100% offline.
 - **Configuración:** 
   1. Instalar [Mosquitto MQTT Broker](https://mosquitto.org/download/) en la computadora o servidor local.
-  2. En `iot_industrial/main_sim.py`, cambiar el código a: `MQTT_BROKER = "localhost"`
+  2. En ambos archivos (`iot_industrial/main_sim.py` y `backend/app/core/mqtt.py`), la variable debe estar así: `BROKER = "broker.hivemq.com"`
 
 ---
 
