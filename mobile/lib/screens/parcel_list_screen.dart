@@ -6,6 +6,7 @@ import '../services/token_storage.dart';
 import 'login_screen.dart';
 import 'parcel_detail_screen.dart';
 import 'global_reports_screen.dart';
+import 'user_management_screen.dart';
 
 class ParcelListScreen extends StatefulWidget {
   const ParcelListScreen({super.key});
@@ -20,6 +21,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
   Timer? _refreshTimer;
   bool _isLoading = true;
   List<Parcel> _parcels = [];
+  List<Map<String, dynamic>> _allUsers = []; // Lista de usuarios para el admin
   String _selectedFilter = 'Todas'; // Control de filtro rápido ('Todas' o '⚠️ Con Estrés')
   String _username = 'Cargando...';
   String _userRole = '';
@@ -31,6 +33,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     _fetchCurrentUser();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       _fetchParcels(showErrors: false);
+      if (_userRole == 'admin') _fetchAllUsers();
     });
   }
 
@@ -108,6 +111,60 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
         _username = userData['username'] as String? ?? 'Usuario';
         _userRole = userData['role'] as String? ?? '';
       });
+      if (_userRole == 'admin') _fetchAllUsers();
+    }
+  }
+
+  Future<void> _fetchAllUsers() async {
+    final users = await _apiClient.getUsers();
+    if (users != null && mounted) {
+      setState(() {
+        _allUsers = users.cast<Map<String, dynamic>>();
+      });
+    }
+  }
+
+  String _ownerName(int ownerId) {
+    final user = _allUsers.where((u) => u['id'] == ownerId).firstOrNull;
+    return user != null ? user['username'] as String : 'ID $ownerId';
+  }
+
+  Future<void> _confirmDeleteParcel(Parcel parcel) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Parcela', style: TextStyle(color: Colors.redAccent)),
+        content: Text('¿Eliminar "${parcel.name}"? Se borrarán todos sus datos de telemetría.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final response = await _apiClient.deleteParcel(parcel.id);
+      if (response.statusCode == 204) {
+        _fetchParcels();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Parcela "${parcel.name}" eliminada')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudo eliminar la parcela')),
+          );
+        }
+      }
     }
   }
 
@@ -115,140 +172,167 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     final nameController = TextEditingController();
     final locationController = TextEditingController();
     final soilTypeController = TextEditingController();
-    final ownerIdController = TextEditingController();
+    // null = asignar al admin (por defecto), int = ID del usuario seleccionado
+    int? selectedOwnerId;
+
+    // Filtrar usuarios no-admin para mostrar en el dropdown
+    final assignableUsers = _allUsers.where((u) => u['role'] != 'admin').toList();
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text(
-            'Registrar Nueva Parcela',
-            style: TextStyle(color: Color(0xFF1B4314), fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nombre de la Parcela'),
-                ),
-                TextField(
-                  controller: locationController,
-                  decoration: const InputDecoration(labelText: 'Ubicación'),
-                ),
-                TextField(
-                  controller: soilTypeController,
-                  decoration: const InputDecoration(labelText: 'Tipo de Suelo'),
-                ),
-                // Campo exclusivo para Admin: asignar parcela a otro usuario
-                if (_userRole == 'admin') ...[
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.admin_panel_settings_rounded, size: 16, color: Color(0xFF1B4314)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Opciones de Administrador',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: ownerIdController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Asignar a Usuario (ID) — opcional',
-                      helperText: 'Dejar vacío para asignar al admin',
-                      helperStyle: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                      prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                'Registrar Nueva Parcela',
+                style: TextStyle(color: Color(0xFF1B4314), fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Nombre de la Parcela'),
                     ),
-                  ),
-                ],
+                    TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(labelText: 'Ubicación'),
+                    ),
+                    TextField(
+                      controller: soilTypeController,
+                      decoration: const InputDecoration(labelText: 'Tipo de Suelo'),
+                    ),
+                    // Sección exclusiva para Admin: asignar parcela a usuario
+                    if (_userRole == 'admin') ...[
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.admin_panel_settings_rounded, size: 16, color: Color(0xFF1B4314)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Opciones de Administrador',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      assignableUsers.isEmpty
+                          ? Text(
+                              'No hay usuarios a quién asignar.\nCrea usuarios desde "Gestión de Usuarios".',
+                              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                            )
+                          : DropdownButtonFormField<int?>(
+                              value: selectedOwnerId,
+                              decoration: const InputDecoration(
+                                labelText: 'Asignar a usuario',
+                                prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
+                              ),
+                              items: [
+                                const DropdownMenuItem<int?>(
+                                  value: null,
+                                  child: Text('Admin (yo mismo)', style: TextStyle(color: Colors.grey)),
+                                ),
+                                ...assignableUsers.map((u) {
+                                  final role = u['role'] as String? ?? '';
+                                  return DropdownMenuItem<int?>(
+                                    value: u['id'] as int,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          role == 'farmer' ? Icons.agriculture_rounded : Icons.visibility_rounded,
+                                          size: 16,
+                                          color: role == 'farmer' ? const Color(0xFF2E86C1) : const Color(0xFF8E44AD),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text('${u['username']} '),
+                                        Text('(${role.toUpperCase()})',
+                                            style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                              onChanged: (val) => setDialogState(() => selectedOwnerId = val),
+                            ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6043)),
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    final location = locationController.text.trim();
+                    final soilType = soilTypeController.text.trim();
+
+                    if (name.isEmpty || location.isEmpty || soilType.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Por favor, completa todos los campos')),
+                      );
+                      return;
+                    }
+
+                    final Map<String, dynamic> payload = {
+                      'name': name,
+                      'location': location,
+                      'soil_type': soilType,
+                    };
+
+                    if (_userRole == 'admin' && selectedOwnerId != null) {
+                      payload['owner_id'] = selectedOwnerId;
+                    }
+
+                    try {
+                      final response = await _apiClient.postJson('/parcels', payload);
+                      if (response.statusCode == 201) {
+                        if (mounted) {
+                          Navigator.pop(context);
+                          _fetchParcels();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Parcela registrada con éxito')),
+                          );
+                        }
+                      } else if (response.statusCode == 404) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Usuario destino no encontrado')),
+                          );
+                        }
+                      } else {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Error al registrar parcela')),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error de conexión')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Registrar', style: TextStyle(color: Colors.white)),
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6043)),
-              onPressed: () async {
-                final name = nameController.text.trim();
-                final location = locationController.text.trim();
-                final soilType = soilTypeController.text.trim();
-                final ownerIdText = ownerIdController.text.trim();
-
-                if (name.isEmpty || location.isEmpty || soilType.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Por favor, completa todos los campos')),
-                  );
-                  return;
-                }
-
-                // Construir el payload base
-                final Map<String, dynamic> payload = {
-                  'name': name,
-                  'location': location,
-                  'soil_type': soilType,
-                };
-
-                // Si es admin y especificó un owner_id, añadirlo al payload
-                if (_userRole == 'admin' && ownerIdText.isNotEmpty) {
-                  final parsedId = int.tryParse(ownerIdText);
-                  if (parsedId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('El ID de usuario debe ser un número válido')),
-                    );
-                    return;
-                  }
-                  payload['owner_id'] = parsedId;
-                }
-
-                try {
-                  final response = await _apiClient.postJson('/parcels', payload);
-
-                  if (response.statusCode == 201) {
-                    if (mounted) {
-                      Navigator.pop(context);
-                      _fetchParcels();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Parcela registrada con éxito')),
-                      );
-                    }
-                  } else if (response.statusCode == 404) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Usuario destino no encontrado. Verifica el ID.')),
-                      );
-                    }
-                  } else {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Error al registrar parcela')),
-                      );
-                    }
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error de conexión')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Registrar', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+            );
+          },
         );
       },
     );
   }
+
 
   // --- COMPONENTE: MENÚ LATERAL (DRAWER) ---
   Widget _buildNavigationDrawer(BuildContext context) {
@@ -291,6 +375,22 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
               );
             },
           ),
+          // Opción exclusiva para Administradores
+          if (_userRole == 'admin') ...[
+            ListTile(
+              leading: const Icon(Icons.manage_accounts_rounded, color: Color(0xFF1B4314)),
+              title: const Text('Gestión de Usuarios', style: TextStyle(fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UserManagementScreen(),
+                  ),
+                ).then((_) => _fetchAllUsers()); // Refrescar usuarios al volver
+              },
+            ),
+          ],
           const Divider(height: 20, thickness: 0.5),
           const Spacer(),
           ListTile(
@@ -525,6 +625,22 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                               ),
                                             ],
                                           ),
+                                          // 👤 OWNER BADGE (solo visible para el Admin)
+                                          if (_userRole == 'admin') ...[
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.person_pin_rounded, size: 15, color: Color(0xFF1B4314)),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'Propietario: ${_ownerName(parcel.ownerId)}',
+                                                  style: const TextStyle(color: Color(0xFF1B4314), fontSize: 12, fontWeight: FontWeight.w600),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                           
                                           const SizedBox(height: 12),
                                           
