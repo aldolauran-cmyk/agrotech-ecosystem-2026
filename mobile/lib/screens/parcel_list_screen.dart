@@ -752,10 +752,9 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
                                             children: [
-                                              Expanded(
+                                              Flexible(
                                                 child: Text(
                                                   parcel.name,
                                                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1B4314)),
@@ -763,18 +762,20 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
-                                              if (_userRole != 'viewer')
+                                              if (_userRole != 'viewer') ...[
+                                                const SizedBox(width: 8),
                                                 InkWell(
                                                   onTap: () => _showEditParcelDialog(parcel),
                                                   child: Container(
                                                     padding: const EdgeInsets.all(4),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.white.withOpacity(0.5),
-                                                      borderRadius: BorderRadius.circular(8),
+                                                      color: Colors.white.withOpacity(0.7),
+                                                      borderRadius: BorderRadius.circular(6),
                                                     ),
-                                                    child: const Icon(Icons.edit_rounded, size: 20, color: Color(0xFF3B6043)),
+                                                    child: const Icon(Icons.edit_rounded, size: 16, color: Color(0xFF3B6043)),
                                                   ),
                                                 ),
+                                              ],
                                             ],
                                           ),
                                           const SizedBox(height: 6),
