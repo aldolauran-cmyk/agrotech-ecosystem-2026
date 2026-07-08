@@ -103,7 +103,7 @@ El simulador provee telemetría constante a las parcelas activas.
    ```
 4. **Inicio de sesión por defecto:**
    * **Usuario**: `admin`
-   * **Contraseña**: `admin`
+   * **Contraseña**: `admin123`
 
 *(Nota para emuladores Android: Android Studio usa `10.0.2.2` para referirse al `localhost`. Si la app no conecta, verifique `api_constants.dart`).*
 
