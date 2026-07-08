@@ -5,7 +5,7 @@ import json
 import paho.mqtt.client as mqtt
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
-MQTT_BROKER = "localhost"
+MQTT_BROKER = "broker.hivemq.com"
 
 MQTT_PORT = 1883
 MQTT_TOPIC_TEMPLATE = "unmsm/agrotech/parcel/{parcel_id}/telemetry"

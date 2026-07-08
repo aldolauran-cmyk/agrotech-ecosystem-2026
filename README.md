@@ -34,9 +34,9 @@ Asegúrese de tener instalado el siguiente software en su equipo antes de contin
    * *Importante (Windows)*: Durante la instalación, marque la casilla **"Add Python to PATH"**.
 2. **Flutter SDK 3.19+** -> [Guía de Instalación de Flutter](https://docs.flutter.dev/get-started/install)
    * Configure un emulador Android/iOS o asegúrese de tener Google Chrome para compilación web.
-3. **Mosquitto MQTT Broker** -> [Descargar Mosquitto](https://mosquitto.org/download/)
-   * Actuará como el servidor local de mensajería IoT. En Windows se instala automáticamente como un servicio en segundo plano.
-4. **Git** -> [Descargar Git](https://git-scm.com/)
+3. **Git** -> [Descargar Git](https://git-scm.com/)
+
+*(Nota: Este proyecto utiliza el Broker MQTT público de HiveMQ en la nube, por lo que **no** es necesario instalar Mosquitto ni ningún broker local en su equipo).*
 
 ---
 
@@ -52,12 +52,7 @@ En Windows, PowerShell suele bloquear la activación de entornos virtuales por s
    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
    ```
 
-### Paso 2: Broker MQTT (Mosquitto)
-El simulador IoT y el backend necesitan comunicarse a través del servidor MQTT.
-* En **Windows**, tras la instalación de Mosquitto, el servicio arranca automáticamente en el puerto `1883`.
-* Si el servicio está detenido, abra la aplicación **Servicios** de Windows (`services.msc`), busque **"Mosquitto Broker"** y haga clic en **Iniciar**.
-
-### Paso 3: Configurar el Backend (FastAPI)
+### Paso 2: Configurar el Backend (FastAPI)
 1. Abra una terminal en la raíz del proyecto y entre a la carpeta del backend:
    ```bash
    cd backend
@@ -84,7 +79,7 @@ El simulador IoT y el backend necesitan comunicarse a través del servidor MQTT.
    ```
    *(También puede usar `python -m uvicorn backend.main:app --reload` desde la raíz). El backend estará disponible en `http://127.0.0.1:8000`.*
 
-### Paso 4: Ejecutar el Simulador IoT
+### Paso 3: Ejecutar el Simulador IoT
 El simulador provee telemetría constante a las parcelas activas.
 1. Abra una **nueva terminal**, active el entorno virtual (paso 3.2).
 2. Ejecute el script del simulador:
@@ -93,7 +88,7 @@ El simulador provee telemetría constante a las parcelas activas.
    ```
    *El simulador iniciará sesión de forma segura y comenzará a enviar datos de humedad, pH y temperatura simulados cada 5 segundos a Mosquitto.*
 
-### Paso 5: Ejecutar la App Móvil (Flutter)
+### Paso 4: Ejecutar la App Móvil (Flutter)
 1. Abra una **tercera terminal** y navega al directorio del móvil:
    ```bash
    cd mobile
