@@ -340,9 +340,14 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     final nameController = TextEditingController(text: parcel.name);
     final locationController = TextEditingController(text: parcel.location);
     final soilTypeController = TextEditingController(text: parcel.soilType);
-    int? selectedOwnerId = parcel.ownerId;
-
+    
     final assignableUsers = _allUsers.where((u) => u['role'] != 'admin').toList();
+    
+    int? selectedOwnerId = parcel.ownerId;
+    // Si el dueño actual es admin o no está en la lista de asignables, seleccionamos "null" (Admin)
+    if (!assignableUsers.any((u) => u['id'] == selectedOwnerId)) {
+      selectedOwnerId = null;
+    }
 
     showDialog(
       context: context,
