@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.database import get_db
 from backend.app.models.user import User
 from backend.app.schemas.user import RoleEnum, UserCreate, UserResponse
-from backend.app.core.security import hash_password, require_admin
+from backend.app.core.security import hash_password, require_admin, get_current_user
 
 # Corregido: Quitamos el prefijo de aquí porque ya se lo pones en main.py de manera global
 router = APIRouter(tags=["Users"])
@@ -34,3 +34,14 @@ def create_user(
     db.commit()
     db.refresh(new_user)
     return new_user
+
+
+@router.get(
+    "/users/me",
+    response_model=UserResponse,
+    summary="Obtener perfil del usuario autenticado",
+)
+def read_user_me(
+    current_user: User = Depends(get_current_user),
+):
+    return current_user

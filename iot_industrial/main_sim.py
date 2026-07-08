@@ -37,6 +37,22 @@ def get_valid_token():
         return None
 
 
+def obtener_parcelas(headers):
+    """Obtiene la lista de IDs de parcelas registradas en el sistema."""
+    try:
+        response = requests.get(f"{BASE_URL}/parcels", headers=headers, timeout=5)
+        if response.status_code == 200:
+            parcelas = response.json()
+            ids = [p["id"] for p in parcelas]
+            return ids
+        else:
+            print(f"Error al obtener parcelas: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"Error de conexión al obtener parcelas: {e}")
+        return []
+
+
 def garantizar_parcela_existente(headers):
     """Verifica si existen parcelas, de lo contrario crea la Parcela ID 1"""
     print("Verificando disponibilidad de parcelas en el sistema...")
@@ -92,23 +108,30 @@ if __name__ == "__main__":
 
     print("\n¡Autenticación y entorno completados! Enviando telemetría cada 5 segundos...\n")
 
-    parcel_id = 1
-    topic = MQTT_TOPIC_TEMPLATE.format(parcel_id=parcel_id)
-
     while True:
-        data = {
-            "humidity": random.randint(20, 80),
-            "temperature": random.randint(15, 35),
-            "ph": round(random.uniform(5.5, 7.5), 2),
-            "parcel_id": parcel_id
-        }
-        try:
-            # Publicar mediante MQTT con QoS 1 (Asegurar entrega)
-            payload = json.dumps(data)
-            info = mqtt_client.publish(topic, payload, qos=1)
-            info.wait_for_publish()  # Esperar a que se complete el envío
-            print(f"[IoT MQTT Publish] Enviado a {topic}: {payload}")
-        except Exception as e:
-            print(f"Error al transmitir telemetría por MQTT: {e}")
+        # Obtener dinámicamente todas las parcelas registradas
+        parcel_ids = obtener_parcelas(headers)
+
+        if not parcel_ids:
+            print("[Advertencia] No hay parcelas registradas. Esperando...")
+            time.sleep(5)
+            continue
+
+        for parcel_id in parcel_ids:
+            topic = MQTT_TOPIC_TEMPLATE.format(parcel_id=parcel_id)
+            data = {
+                "humidity": random.randint(20, 80),
+                "temperature": random.randint(15, 35),
+                "ph": round(random.uniform(5.5, 7.5), 2),
+                "parcel_id": parcel_id
+            }
+            try:
+                # Publicar mediante MQTT con QoS 1 (Asegurar entrega)
+                payload = json.dumps(data)
+                info = mqtt_client.publish(topic, payload, qos=1)
+                info.wait_for_publish()  # Esperar a que se complete el envío
+                print(f"[IoT MQTT Publish] Enviado a {topic}: {payload}")
+            except Exception as e:
+                print(f"Error al transmitir telemetría por MQTT: {e}")
             
         time.sleep(5)

@@ -23,6 +23,23 @@ class ApiClient {
     );
   }
 
+  Future<http.Response> postJson(String path, Map<String, dynamic> body, {bool withAuth = true}) async {
+    final headers = <String, String>{
+      'Content-Type': 'application/json; charset=utf-8',
+    };
+    if (withAuth) {
+      final token = await _tokenStorage.readToken();
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    }
+    return _client.post(
+      _buildUri(path),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+  }
+
   Future<http.Response> get(String path, {bool withAuth = true}) async {
     final headers = <String, String>{};
     if (withAuth) {
@@ -32,6 +49,19 @@ class ApiClient {
       }
     }
     return _client.get(_buildUri(path), headers: headers);
+  }
+
+  Future<Map<String, dynamic>?> getCurrentUser() async {
+    try {
+      final response = await get('/users/me', withAuth: true);
+      if (response.statusCode == 200) {
+        return decodeJson(response);
+      }
+      return null;
+    } catch (e) {
+      print('Error al obtener usuario actual: $e');
+      return null;
+    }
   }
 
   Map<String, dynamic> decodeJson(http.Response response) {

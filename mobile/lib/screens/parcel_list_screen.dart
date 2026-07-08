@@ -5,6 +5,7 @@ import '../services/api_client.dart';
 import '../services/token_storage.dart';
 import 'login_screen.dart';
 import 'parcel_detail_screen.dart';
+import 'global_reports_screen.dart';
 
 class ParcelListScreen extends StatefulWidget {
   const ParcelListScreen({super.key});
@@ -20,11 +21,14 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
   bool _isLoading = true;
   List<Parcel> _parcels = [];
   String _selectedFilter = 'Todas'; // Control de filtro rápido ('Todas' o '⚠️ Con Estrés')
+  String _username = 'Cargando...';
+  String _userRole = '';
 
   @override
   void initState() {
     super.initState();
     _fetchParcels();
+    _fetchCurrentUser();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       _fetchParcels(showErrors: false);
     });
@@ -97,25 +101,124 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     );
   }
 
+  Future<void> _fetchCurrentUser() async {
+    final userData = await _apiClient.getCurrentUser();
+    if (userData != null && mounted) {
+      setState(() {
+        _username = userData['username'] as String? ?? 'Usuario';
+        _userRole = userData['role'] as String? ?? '';
+      });
+    }
+  }
+
+  void _showCreateParcelDialog() {
+    final nameController = TextEditingController();
+    final locationController = TextEditingController();
+    final soilTypeController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Registrar Nueva Parcela',
+            style: TextStyle(color: Color(0xFF1B4314), fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nombre de la Parcela'),
+                ),
+                TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(labelText: 'Ubicación'),
+                ),
+                TextField(
+                  controller: soilTypeController,
+                  decoration: const InputDecoration(labelText: 'Tipo de Suelo'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6043)),
+              onPressed: () async {
+                final name = nameController.text.trim();
+                final location = locationController.text.trim();
+                final soilType = soilTypeController.text.trim();
+
+                if (name.isEmpty || location.isEmpty || soilType.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, completa todos los campos')),
+                  );
+                  return;
+                }
+
+                try {
+                  final response = await _apiClient.postJson('/parcels', {
+                    'name': name,
+                    'location': location,
+                    'soil_type': soilType,
+                  });
+
+                  if (response.statusCode == 201) {
+                    if (mounted) {
+                      Navigator.pop(context);
+                      _fetchParcels();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Parcela registrada con éxito')),
+                      );
+                    }
+                  } else {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Error al registrar parcela')),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Error de conexión')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Registrar', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // --- COMPONENTE: MENÚ LATERAL (DRAWER) ---
   Widget _buildNavigationDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: const Color(0xFFF7F9F6),
       child: Column(
         children: [
-          const UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: Color(0xFF1B4314)),
-            currentAccountPicture: CircleAvatar(
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(color: Color(0xFF1B4314)),
+            currentAccountPicture: const CircleAvatar(
               backgroundColor: Color(0xFFE2E7DF),
               child: Icon(Icons.person_rounded, size: 40, color: Color(0xFF1B4314)),
             ),
             accountName: Text(
-              'Piero Andres Torres', 
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              _username.toUpperCase(), 
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             accountEmail: Text(
-              'piero.torres@unmsm.edu.pe', 
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              '${_username.toLowerCase()}@agrotech.com - ${_userRole.toUpperCase()}', 
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
           ),
           ListTile(
@@ -128,7 +231,15 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
           ListTile(
             leading: const Icon(Icons.analytics_rounded, color: Colors.black54),
             title: const Text('Reportes Globales'),
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GlobalReportsScreen(parcels: _parcels),
+                ),
+              );
+            },
           ),
           const Divider(height: 20, thickness: 0.5),
           const Spacer(),
@@ -302,7 +413,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => ParcelDetailScreen(parcel: parcel),
                                 ),
-                              );
+                              ).then((_) => _fetchParcels()); // Refrescar al volver del detalle
                               },
                               child: Container(
                                 margin: const EdgeInsets.only(bottom: 20),
@@ -448,9 +559,14 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                             );
                           },
                         ),
-            ),
+             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF3B6043),
+        onPressed: _showCreateParcelDialog,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
