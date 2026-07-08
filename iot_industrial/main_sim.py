@@ -18,7 +18,7 @@ def get_valid_token():
             f"{BASE_URL}/token",
             data={
                 "username": "admin",
-                "password": "admin"
+                "password": "admin123"
             },
             timeout=5
         )
