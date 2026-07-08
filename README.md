@@ -2,102 +2,115 @@
 
 ![AgroTech Banner](https://img.shields.io/badge/AgroTech-Ecosystem%202026-1B4314?style=for-the-badge)
 
-AgroTech Ecosystem es un sistema integral (Monorepo) diseñado para la gestión de parcelas agrícolas, control de telemetría IoT y administración de usuarios basado en roles (RBAC). El sistema cuenta con un backend robusto en Python (FastAPI), una aplicación móvil multiplataforma (Flutter) y se prepara para integrarse con simulaciones (Godot) y redes IoT.
+AgroTech Ecosystem es un sistema integral (Monorepo) diseñado para la gestión de parcelas agrícolas, control de telemetría IoT y administración de usuarios basado en roles (RBAC). El sistema cuenta con un backend robusto en Python (FastAPI), una aplicación móvil multiplataforma (Flutter) y se integra con simulaciones IoT (MQTT) para monitoreo en tiempo real.
+
+Este documento sirve como guía oficial para desarrolladores, evaluadores o colaboradores externos que deseen clonar, configurar y ejecutar el proyecto desde cero en un entorno local.
 
 ---
 
-## 📖 ¿Cómo funciona el proyecto? (Flujos y Roles)
+## 📖 Arquitectura y Flujos de Usuario (RBAC)
 
-El sistema opera bajo un modelo **RBAC (Role-Based Access Control)** con tres niveles de acceso:
+El sistema opera bajo un modelo **RBAC (Role-Based Access Control)** con tres niveles de acceso principales:
 
 1. **👑 Administrador (`admin`)**
-   - **Flujo:** Tiene control total del sistema. Puede crear y eliminar usuarios, restablecer contraseñas y ver absolutamente todas las parcelas.
-   - **Acción destacada:** Puede crear parcelas y asignarlas (o reasignarlas) a cualquier Farmer. Tiene acceso exclusivo a Reportes Globales y Gestión de Usuarios.
+   - **Alcance:** Control total del sistema.
+   - **Acciones:** Puede crear, editar y eliminar usuarios, restablecer contraseñas y ver absolutamente todas las parcelas. Puede reasignar parcelas a cualquier usuario. Tiene acceso exclusivo a Reportes Globales y Gestión de Usuarios.
 
 2. **👨‍🌾 Agricultor (`farmer`)**
-   - **Flujo:** Es el dueño directo de la tierra. Al iniciar sesión, **solo ve las parcelas que el Admin le ha asignado**.
-   - **Acción destacada:** Puede monitorear la telemetría (humedad, pH, temperatura) de sus propias parcelas y editar detalles físicos (nombre, ubicación), pero no puede borrar usuarios ni ver parcelas ajenas.
+   - **Alcance:** Dueño directo de la tierra.
+   - **Acciones:** Al iniciar sesión, **solo ve las parcelas que le han sido asignadas**. Puede monitorear la telemetría (humedad, pH, temperatura) de sus propias parcelas y editar detalles físicos (nombre, ubicación). No tiene acceso a datos ajenos ni administración.
 
 3. **👁️ Auditor / Visualizador (`viewer`)**
-   - **Flujo:** Un rol de "solo lectura". Puede ver todas las parcelas de todos los farmers y acceder a los Reportes Globales, pero **no puede editar, crear, reasignar ni eliminar absolutamente nada**.
+   - **Alcance:** Rol de "solo lectura".
+   - **Acciones:** Puede ver todas las parcelas de todos los farmers y acceder a los Reportes Globales. **No puede editar, crear, reasignar ni eliminar absolutamente nada**.
 
 ---
 
-## 🚀 Guía de Instalación desde Cero (Para computadoras nuevas)
+## 📋 Requisitos Previos
 
-Si acabas de clonar este repositorio en una computadora nueva, sigue estos pasos al pie de la letra para levantar el sistema.
+Asegúrese de tener instalado el siguiente software en su equipo antes de continuar:
 
-### Requisitos Previos
-* **Python 3.11+** instalado (Asegúrate de marcar "Add Python to PATH" en la instalación).
-* **Flutter SDK 3.19+** instalado y configurado en tus variables de entorno.
-* **Git** instalado.
+1. **Python 3.11+** -> [Descargar Python](https://www.python.org/downloads/)
+   * *Importante (Windows)*: Durante la instalación, marque la casilla **"Add Python to PATH"**.
+2. **Flutter SDK 3.19+** -> [Guía de Instalación de Flutter](https://docs.flutter.dev/get-started/install)
+   * Configure un emulador Android/iOS o asegúrese de tener Google Chrome para compilación web.
+3. **Mosquitto MQTT Broker** -> [Descargar Mosquitto](https://mosquitto.org/download/)
+   * Actuará como el servidor local de mensajería IoT. En Windows se instala automáticamente como un servicio en segundo plano.
+4. **Git** -> [Descargar Git](https://git-scm.com/)
 
 ---
 
-### Paso 1: Solucionar Permisos en Windows (Importante) ⚠️
-En computadoras nuevas, Windows suele bloquear la ejecución de entornos virtuales por seguridad. Para evitar el error de *"no se puede cargar el archivo porque la ejecución de scripts está deshabilitada"*:
-1. Abre **PowerShell como Administrador**.
-2. Ejecuta el siguiente comando y acepta con la letra `O` o `Y`:
+## 🚀 Guía de Instalación y Ejecución
+
+Siga estos pasos en orden para levantar todo el ecosistema (Broker, Backend, Simulador IoT y Frontend Móvil).
+
+### Paso 1: Solucionar Permisos en Windows (Solo si es necesario) ⚠️
+En Windows, PowerShell suele bloquear la activación de entornos virtuales por seguridad. Si recibe un error sobre "ejecución de scripts deshabilitada":
+1. Abra **PowerShell como Administrador**.
+2. Ejecute este comando y acepte con `Y` o `O`:
    ```powershell
    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
    ```
 
----
+### Paso 2: Broker MQTT (Mosquitto)
+El simulador IoT y el backend necesitan comunicarse a través del servidor MQTT.
+* En **Windows**, tras la instalación de Mosquitto, el servicio arranca automáticamente en el puerto `1883`.
+* Si el servicio está detenido, abra la aplicación **Servicios** de Windows (`services.msc`), busque **"Mosquitto Broker"** y haga clic en **Iniciar**.
 
-### Paso 2: Configurar el Backend (FastAPI)
-
-El backend maneja la base de datos (SQLite) y provee la API RESTful.
-
-1. Abre una terminal en la carpeta principal del proyecto y entra al backend:
+### Paso 3: Configurar el Backend (FastAPI)
+1. Abra una terminal en la raíz del proyecto y entre a la carpeta del backend:
    ```bash
    cd backend
    ```
-2. Crea un entorno virtual para aislar las dependencias:
-   ```bash
-   python -m venv .venv
-   ```
-3. Activa el entorno virtual:
-   * **Windows (PowerShell):** `.\.venv\Scripts\Activate.ps1`
-   * **Mac/Linux:** `source .venv/bin/activate`
-4. Instala las dependencias:
-   ```bash
-   pip install -r app/requirements.txt
-   ```
-5. Configura las variables de entorno:
-   * En la raíz del proyecto, copia el archivo `.env.example` y renómbralo a `.env`.
-   * (Opcional) Ejecuta el archivo de *seeding* si deseas crear un Admin por defecto al instante:
-     ```bash
-     python seed_db.py
+2. Cree y active un entorno virtual limpio:
+   * **Windows (PowerShell):**
+     ```powershell
+     python -m venv .venv
+     .\.venv\Scripts\Activate.ps1
      ```
-6. Levanta el servidor:
+   * **Mac/Linux:**
+     ```bash
+     python -m venv .venv
+     source .venv/bin/activate
+     ```
+3. Instale las dependencias requeridas:
+   ```bash
+   pip install -r app/requirements.txt requests
+   ```
+4. En la **raíz del proyecto**, copie el archivo `.env.example` y renómbrelo a `.env`. (Contiene las credenciales para sembrar el usuario admin por defecto).
+5. Inicie el servidor:
    ```bash
    fastapi dev app/main.py
    ```
-   *✅ El servidor estará corriendo en `http://127.0.0.1:8000`. Puedes ver la documentación de la API entrando a `http://127.0.0.1:8000/docs`.*
+   *(También puede usar `python -m uvicorn backend.main:app --reload` desde la raíz). El backend estará disponible en `http://127.0.0.1:8000`.*
 
----
+### Paso 4: Ejecutar el Simulador IoT
+El simulador provee telemetría constante a las parcelas activas.
+1. Abra una **nueva terminal**, active el entorno virtual (paso 3.2).
+2. Ejecute el script del simulador:
+   ```bash
+   python iot_industrial/main_sim.py
+   ```
+   *El simulador iniciará sesión de forma segura y comenzará a enviar datos de humedad, pH y temperatura simulados cada 5 segundos a Mosquitto.*
 
-### Paso 3: Configurar la App Móvil (Flutter)
-
-La aplicación es la interfaz visual donde los usuarios interactuarán con el sistema.
-
-1. Abre **otra terminal** y entra a la carpeta mobile:
+### Paso 5: Ejecutar la App Móvil (Flutter)
+1. Abra una **tercera terminal** y navega al directorio del móvil:
    ```bash
    cd mobile
    ```
-2. Descarga los paquetes y dependencias de Flutter:
+2. Instale los paquetes y dependencias:
    ```bash
    flutter pub get
    ```
-3. Ejecuta la aplicación en un emulador o en tu navegador web:
+3. Ejecute la aplicación (seleccione su emulador o navegador web):
    ```bash
    flutter run
    ```
-   *(Nota: Al ejecutar, selecciona tu Emulador de Android/iOS o Chrome).*
+4. **Inicio de sesión por defecto:**
+   * **Usuario**: `admin`
+   * **Contraseña**: `admin`
 
-#### 🛑 Posibles errores en Flutter y cómo solucionarlos:
-* **Si el backend rechaza la conexión desde el emulador Android:** Recuerda que Android Studio usa la IP `10.0.2.2` para referirse al `localhost` de tu computadora. Verifica que tu archivo de configuración de API en Flutter apunte a esa IP si estás en Android, o a `127.0.0.1` si estás en Web/iOS.
-* **Error de dependencias al compilar:** Ejecuta `flutter clean` seguido de `flutter pub get` e intenta de nuevo.
+*(Nota para emuladores Android: Android Studio usa `10.0.2.2` para referirse al `localhost`. Si la app no conecta, verifique `api_constants.dart`).*
 
 ---
 
