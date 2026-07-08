@@ -12,7 +12,7 @@ logger = logging.getLogger("mqtt_subscriber")
 logger.setLevel(logging.INFO)
 
 # Configuración del Broker y Tópico
-BROKER = "localhost"
+BROKER = "broker.hivemq.com"
 
 PORT = 1883
 TOPIC = "unmsm/agrotech/parcel/+/telemetry"
