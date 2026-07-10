@@ -8,15 +8,21 @@ extends Camera3D
 func _process(delta: float) -> void:
 	var move_direction = Vector3.ZERO
 	
-	# Detectar la presión de teclas físicas directas (sin necesidad de configurar Input Map)
+	# Movimiento horizontal (desplazamiento adelante/atrás y lateral)
 	if Input.is_key_pressed(KEY_W):
 		move_direction -= global_transform.basis.z
 	if Input.is_key_pressed(KEY_S):
 		move_direction += global_transform.basis.z
-	if Input.is_key_pressed(KEY_A):
+	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
 		move_direction -= global_transform.basis.x
-	if Input.is_key_pressed(KEY_D):
+	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 		move_direction += global_transform.basis.x
+		
+	# Movimiento vertical global (subir/bajar altura en el eje Y)
+	if Input.is_key_pressed(KEY_UP):
+		move_direction += Vector3.UP
+	if Input.is_key_pressed(KEY_DOWN):
+		move_direction += Vector3.DOWN
 		
 	# Mover suavemente si se ha ingresado alguna dirección
 	if move_direction.length_squared() > 0.0:
