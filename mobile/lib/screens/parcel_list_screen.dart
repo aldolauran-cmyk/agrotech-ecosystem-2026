@@ -866,8 +866,8 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                             ],
                                           ),
                                           
-                                          // ⚠️ BANNER DE ALERTA DE ESTRÉS HÍDRICO REDISEÑADO
-                                          if (parcel.hasWaterStress) ...[
+                                          // ⚠️ BANNER DE ALERTA DE ESTRÉS HÍDRICO / SUELO SATURADO REDISEÑADO
+                                          if (parcel.moisture < 30.0) ...[
                                             const SizedBox(height: 12),
                                             Container(
                                               width: double.infinity,
@@ -890,6 +890,29 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                                 ],
                                               ),
                                             ),
+                                          ] else if (parcel.moisture > 70.0) ...[
+                                            const SizedBox(height: 12),
+                                            Container(
+                                              width: double.infinity,
+                                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFD4E6F1), 
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(color: const Color(0xFFA9CCE3), width: 1),
+                                              ),
+                                              child: const Row(
+                                                children: [
+                                                  Icon(Icons.opacity_rounded, color: Color(0xFF2980B9), size: 18),
+                                                  SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Suelo Saturado / Inundación',
+                                                      style: TextStyle(color: Color(0xFF1B4F72), fontWeight: FontWeight.bold, fontSize: 11.5, letterSpacing: 0.2),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ],
                                         ],
                                       ),
@@ -903,14 +926,20 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                       child: Container(
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: parcel.hasWaterStress ? const Color(0xFFE5CDC8) : const Color(0xFFD2D9CE), 
+                                          color: parcel.moisture < 30.0 
+                                              ? const Color(0xFFE5CDC8) 
+                                              : (parcel.moisture > 70.0 ? const Color(0xFFC7DCE8) : const Color(0xFFD2D9CE)), 
                                           borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
                                         ),
                                         child: Center(
                                           child: Text(
-                                            parcel.hasWaterStress ? 'STATUS: ATTENTION REQUIRED' : 'STATUS: ACTIVE', 
+                                            parcel.moisture < 30.0 
+                                                ? 'STATUS: ATTENTION REQUIRED' 
+                                                : (parcel.moisture > 70.0 ? 'STATUS: WARNING - SATURATED' : 'STATUS: ACTIVE'), 
                                             style: TextStyle(
-                                              color: parcel.hasWaterStress ? const Color(0xFF7B241C) : const Color(0xFF1B4314),
+                                              color: parcel.moisture < 30.0 
+                                                  ? const Color(0xFF7B241C) 
+                                                  : (parcel.moisture > 70.0 ? const Color(0xFF1F4E5B) : const Color(0xFF1B4314)),
                                               fontWeight: FontWeight.w900,
                                               fontSize: 11,
                                               letterSpacing: 0.8,

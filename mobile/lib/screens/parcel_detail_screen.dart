@@ -204,8 +204,8 @@ class _ParcelDetailScreenState extends State<ParcelDetailScreen> {
               ),
               const SizedBox(height: 20),
 
-              // ⚠️ ALERTA DE ESTRÉS HÍDRICO EN TIEMPO REAL
-              if (_hasWaterStress) ...[
+              // ⚠️ ALERTA DE ESTRÉS HÍDRICO / SUELO SATURADO EN TIEMPO REAL
+              if (_moisture < 30.0) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -222,6 +222,29 @@ class _ParcelDetailScreenState extends State<ParcelDetailScreen> {
                         child: Text(
                           '⚠️ ESTRÉS HÍDRICO DETECTADO - Humedad por debajo del 30%',
                           style: TextStyle(color: Color(0xFF922B21), fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ] else if (_moisture > 70.0) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD4E6F1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFA9CCE3), width: 1),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.opacity, color: Color(0xFF2980B9), size: 22),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '🌊 SUELO SATURADO DETECTADO - Humedad por encima del 70%',
+                          style: TextStyle(color: Color(0xFF1B4F72), fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ),
                     ],
