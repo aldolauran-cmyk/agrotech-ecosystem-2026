@@ -107,6 +107,34 @@ El simulador provee telemetría constante a las parcelas activas.
 
 *(Nota para emuladores Android: Android Studio usa `10.0.2.2` para referirse al `localhost`. Si la app no conecta, verifique `api_constants.dart`).*
 
+### Paso 5: Ejecutar el Gemelo Digital 3D (Godot Engine 4.x)
+La simulación interactiva 3D permite visualizar en tiempo real las parcelas instanciadas en la grilla y agrupadas de manera reactiva por su dueño asignado.
+
+1. **Requisitos de Software:**
+   * Descarga e instala **Godot Engine 4.x** (versión 4.1 o posterior, recomendada 4.2+). [Descargar Godot Engine 4](https://godotengine.org/download/).
+2. **Configuración e Importación:**
+   * Abre el lanzador de Godot (Godot Project Manager).
+   * Presiona el botón **Importar** (Import) y navega al directorio del monorepo.
+   * Selecciona el archivo `project.godot` ubicado en:
+     `simulation_godot/agrotech-simulation/project.godot`
+   * Haz clic en **Importar y Editar** para abrir el proyecto en el editor.
+3. **Ejecutar la Simulación:**
+   * Asegúrate de tener levantado el backend FastAPI.
+   * Asegúrate de ejecutar el simulador de telemetría IoT (`python iot_industrial/main_sim.py`) para transmitir tramas de datos MQTT por HiveMQ.
+   * Presiona el botón **Play (F5)** o el icono de reproducción en la esquina superior derecha del editor de Godot.
+4. **Funcionalidades del Entorno 3D:**
+   * **Zonificación Dinámica por Agricultor:** Las parcelas se instancian y agrupan automáticamente en mini-tableros de 2x2 exclusivos para cada agricultor, ordenados alfabéticamente por su nombre de usuario en el eje Z. Los nombres de usuario se sincronizan dinámicamente del backend mediante peticiones REST cada 3 segundos.
+   * **Navegación Interactiva de Cámara Libre (Free Camera):**
+     * **`W` / `S`**: Acercarse o alejarse (zoom en profundidad local `basis.z`).
+     * **`A` / `D`** o **Flecha Izquierda / Derecha**: Desplazarse lateralmente a los lados (eje local `basis.x`).
+     * **Flecha Arriba / Abajo**: Desplazarse de forma vertical pura (subir o bajar la altura de la cámara en el eje vertical de pantalla `basis.y` sin alterar el zoom).
+     * **Clic Derecho (Mantener presionado) + Arrastrar Mouse**: Rotar la dirección de la mirada (guiñada y cabeceo con tope de seguridad de 80°).
+   * **Sincronización de Alertas y Materiales 3D:**
+     * **🟤 Marrón**: Suelo con *Estrés Hídrico* (Humedad < 30.0%).
+     * **🟢 Verde**: Suelo en estado *Óptimo* (Humedad entre 30.0% y 70.0%).
+     * **🔵 Azul**: Suelo *Saturado / Inundado* (Humedad > 70.0%).
+     * **Label3D Flotante**: Cada bloque muestra su ID de parcela, el nombre del agricultor dueño (ej. `Farmer: juan`), la humedad redondeada a un decimal (`%`), la temperatura (`°C`) y el pH.
+
 ---
 
 ## 🌐 Opciones de Arquitectura IoT (Cloud vs Edge)
@@ -141,5 +169,9 @@ agrotech-ecosystem-2026/
 │   │   ├── screens/    # Interfaces de usuario (Login, ParcelList, UserManagement)
 │   │   └── services/   # Cliente API HTTP (api_client.dart)
 ├── iot_industrial/     # Scripts de simulación IoT por MQTT
-└── simulation_godot/   # (Próximamente) Entorno Gemelo Digital
+└── simulation_godot/   # Entorno de Gemelo Digital 3D (Godot Engine)
+    └── agrotech-simulation/
+        ├── scenes/     # Escenas de simulación (.tscn)
+        ├── scripts/    # Lógica de control en GDScript (cámara, red, parcelas)
+        └── mqtt/       # Script conector MQTT para Godot
 ```
