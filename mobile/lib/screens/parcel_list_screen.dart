@@ -656,12 +656,11 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
   // --- COMPONENTE: CÁPSULA ESTILIZADA DE SENSORES IOT ---
   Widget _buildVisualSensorBadge(IconData icon, String value, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withAlpha((0.75 * 255).round()),
         borderRadius: BorderRadius.circular(14),
       ),
-      width: 76, 
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -793,7 +792,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                           ),
                                         ],
                                       ),
-                                      padding: const EdgeInsets.only(left: 20, top: 18, right: 130, bottom: 48), 
+                                      padding: const EdgeInsets.only(left: 20, top: 18, right: 110, bottom: 48), 
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
@@ -874,13 +873,14 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                           
                                           const SizedBox(height: 12),
                                           
-                                          // 💧 🧪 🌡️ CONTENEDORES DE TELEMETRÍA IOT
+                                          // 💧 🧪 🌡️ CONTENEDORES DE TELEMETRÍA IOT (Expandibles y Flexibles)
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              _buildVisualSensorBadge(Icons.water_drop_rounded, '${parcel.moisture}%', 'Humedad'),
-                                              _buildVisualSensorBadge(Icons.science_rounded, '${parcel.ph}', 'pH Suelo'),
-                                              _buildVisualSensorBadge(Icons.thermostat_rounded, '${parcel.temperature}°C', 'Temp'),
+                                              Expanded(child: _buildVisualSensorBadge(Icons.water_drop_rounded, '${parcel.moisture}%', 'Humedad')),
+                                              const SizedBox(width: 6),
+                                              Expanded(child: _buildVisualSensorBadge(Icons.science_rounded, '${parcel.ph}', 'pH Suelo')),
+                                              const SizedBox(width: 6),
+                                              Expanded(child: _buildVisualSensorBadge(Icons.thermostat_rounded, '${parcel.temperature}°C', 'Temp')),
                                             ],
                                           ),
                                           
@@ -967,7 +967,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                       ),
                                     ),
 
-                                    // 🚜 ILUSTRACIÓN DEL TRACTOR GIGANTE
+                                    // 🚜 ILUSTRACIÓN DEL TRACTOR GIGANTE (Escalado para pantallas pequeñas)
                                     Positioned(
                                       right: -8, 
                                       top: -18,   
@@ -975,7 +975,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                       child: Image.asset(
                                         'assets/logotractor1.png', 
                                         fit: BoxFit.contain,
-                                        width: 135, 
+                                        width: 115, 
                                       ),
                                     ),
                                   ],
