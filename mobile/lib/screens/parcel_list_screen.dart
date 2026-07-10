@@ -633,6 +633,21 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
               setState(() { _selectedFilter = '⚠️ Con Estrés'; });
             },
           ),
+          const SizedBox(width: 10),
+          FilterChip(
+            label: const Text('🌊 Saturadas'),
+            selected: _selectedFilter == '🌊 Saturadas',
+            selectedColor: const Color(0xFFD4E6F1),
+            checkmarkColor: const Color(0xFF1F4E5B),
+            labelStyle: TextStyle(
+              color: _selectedFilter == '🌊 Saturadas' ? const Color(0xFF1F4E5B) : Colors.black87,
+              fontWeight: _selectedFilter == '🌊 Saturadas' ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+            ),
+            onSelected: (bool selected) {
+              setState(() { _selectedFilter = '🌊 Saturadas'; });
+            },
+          ),
         ],
       ),
     );
@@ -673,6 +688,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
     // Filtrado dinámico local de la lista en memoria
     final filteredParcels = _parcels.where((parcel) {
       if (_selectedFilter == '⚠️ Con Estrés') return parcel.hasWaterStress;
+      if (_selectedFilter == '🌊 Saturadas') return parcel.moisture > 70.0;
       return true;
     }).toList();
 
@@ -733,7 +749,9 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                   Text(
                                     _selectedFilter == '⚠️ Con Estrés' 
                                         ? 'No hay parcelas con estrés hídrico.'
-                                        : 'No tienes parcelas registradas aún.',
+                                        : (_selectedFilter == '🌊 Saturadas' 
+                                            ? 'No hay parcelas con suelo saturado.'
+                                            : 'No tienes parcelas registradas aún.'),
                                     style: TextStyle(color: Colors.grey[600], fontSize: 16),
                                   ),
                                 ],
