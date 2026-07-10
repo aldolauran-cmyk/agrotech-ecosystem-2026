@@ -18,11 +18,11 @@ func _process(delta: float) -> void:
 	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 		move_direction += global_transform.basis.x
 		
-	# Movimiento vertical global (subir/bajar altura en el eje Y)
+	# Movimiento vertical local (desplazar la cámara hacia arriba/abajo en el espacio de la pantalla)
 	if Input.is_key_pressed(KEY_UP):
-		move_direction += Vector3.UP
+		move_direction += global_transform.basis.y
 	if Input.is_key_pressed(KEY_DOWN):
-		move_direction += Vector3.DOWN
+		move_direction -= global_transform.basis.y
 		
 	# Mover suavemente si se ha ingresado alguna dirección
 	if move_direction.length_squared() > 0.0:
