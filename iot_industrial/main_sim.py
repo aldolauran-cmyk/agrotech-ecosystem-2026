@@ -135,13 +135,30 @@ def calcular_siguiente_telemetria(parcel_id):
     # Acotación matemática de humedad entre 0.0 y 100.0 con 1 decimal de precisión
     next_humidity = round(max(0.0, min(100.0, next_humidity)), 1)
 
-    # Variar la temperatura actual en un rango de +/- 0.5 respecto al valor base
-    temp_variation = random.uniform(-0.5, 0.5)
-    next_temp = int(round(max(20.0, min(32.0, base_temp + temp_variation))))
+    # Correlación agronómica (Humedad -> Temp y pH)
+    temp_offset = 0.0
+    ph_offset = 0.0
 
-    # Variar el pH actual en un rango de +/- 0.02 respecto al valor base
+    if next_humidity < 30.0:
+        # Suelo seco / Estrés hídrico: se calienta más rápido y se acidifica levemente
+        temp_offset = 2.5
+        ph_offset = -0.15
+    elif next_state == "REGANDO":
+        # Suelo recibiendo agua fresca: se enfría por evaporación y el pH se neutraliza
+        temp_offset = -2.0
+        ph_offset = 0.05
+    elif next_humidity > 70.0:
+        # Suelo sobresaturado (Drenaje): enfriamiento y dilución moderada
+        temp_offset = -1.0
+        ph_offset = 0.0
+
+    # Variar la temperatura actual en un rango de +/- 0.5 respecto al valor base + offset
+    temp_variation = random.uniform(-0.5, 0.5)
+    next_temp = int(round(max(20.0, min(32.0, base_temp + temp_offset + temp_variation))))
+
+    # Variar el pH actual en un rango de +/- 0.02 respecto al valor base + offset
     ph_variation = random.uniform(-0.02, 0.02)
-    next_ph = round(max(5.5, min(7.5, base_ph + ph_variation)), 2)
+    next_ph = round(max(5.5, min(7.5, base_ph + ph_offset + ph_variation)), 2)
 
     # Actualizar estado global
     PARCEL_STATES[parcel_id]["humidity"] = next_humidity
