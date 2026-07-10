@@ -29,6 +29,8 @@ func _ready() -> void:
 
 
 func _on_parcel_telemetry_received(parcel_id: int, humidity: float, temperature: float, ph: float) -> void:
+	var alerta = _calcular_alerta(humidity)
+	
 	# Verificar si la parcela ya está registrada en el diccionario de simulación
 	if not active_parcels.has(parcel_id):
 		print("[SimulationManager] Nueva parcela detectada en red. Registrando ID: ", parcel_id)
@@ -37,16 +39,28 @@ func _on_parcel_telemetry_received(parcel_id: int, humidity: float, temperature:
 		active_parcels[parcel_id] = {
 			"humidity": humidity,
 			"temperature": temperature,
-			"ph": ph
+			"ph": ph,
+			"alerta_estado": alerta
 		}
 		
 		# TODO: Instanciar el bloque 3D en la grilla
 		
 	else:
-		# Si ya existe, simplemente actualizamos sus lecturas
+		# Si ya existe, simplemente actualizamos sus lecturas y estado de alerta
 		active_parcels[parcel_id]["humidity"] = humidity
 		active_parcels[parcel_id]["temperature"] = temperature
 		active_parcels[parcel_id]["ph"] = ph
+		active_parcels[parcel_id]["alerta_estado"] = alerta
 		
 	# Imprimir el estado actual en memoria RAM de la parcela para auditoría en consola
-	print("[SimulationManager] Estado actualizado de Parcela ", parcel_id, " -> ", active_parcels[parcel_id])
+	print("[SimulationManager] Estado actualizado de Parcela ", parcel_id, " -> Humedad: ", humidity, "% | Temp: ", temperature, "°C | pH: ", ph, " | Alerta: [", alerta, "]")
+
+
+# Función interna para evaluar los rangos de negocio agrícolas
+func _calcular_alerta(humidity: float) -> String:
+	if humidity < 30.0:
+		return "ESTRES_HIDRICO"
+	elif humidity >= 30.0 and humidity <= 70.0:
+		return "OPTIMO"
+	else:
+		return "SATURADO"
