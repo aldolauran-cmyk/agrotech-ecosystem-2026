@@ -1,7 +1,7 @@
 extends Node3D
 
 # Señal personalizada con tipado explícito
-signal telemetry_received(parcel_id: int, humidity: float, temperature: float, ph: float)
+signal telemetry_received(parcel_id: int, farmer_id: int, humidity: float, temperature: float, ph: float)
 
 # Instancia del cliente MQTT
 var mqtt_client: Node
@@ -62,9 +62,12 @@ func _on_mqtt_message(topic: String, message: String) -> void:
 			if json_data.has("ph") and json_data["ph"] != null:
 				ph = float(json_data["ph"])
 			
+			# Determinar el farmer_id de forma matemática (4 parcelas por mini-tablero de Farmer)
+			var farmer_id = int((parcel_id - 1) / 4) + 1
+
 			# Emitir la señal personalizada para notificar a los nodos 3D de la simulación
-			telemetry_received.emit(parcel_id, humidity, temperature, ph)
-			print("[NetworkManager] Señal telemetry_received emitida. ID: ", parcel_id, " | H: ", humidity, "% | T: ", temperature, "°C | pH: ", ph)
+			telemetry_received.emit(parcel_id, farmer_id, humidity, temperature, ph)
+			print("[NetworkManager] Señal telemetry_received emitida. ID: ", parcel_id, " | Farmer: ", farmer_id, " | H: ", humidity, "% | T: ", temperature, "°C | pH: ", ph)
 		else:
 			printerr("[NetworkManager] ERROR: Falló la deserialización JSON o el formato no es un diccionario.")
 	else:

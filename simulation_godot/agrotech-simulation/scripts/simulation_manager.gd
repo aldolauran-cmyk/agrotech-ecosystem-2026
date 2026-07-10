@@ -1,9 +1,10 @@
 extends Node
 
 const PARCEL_SCENE = preload("res://scenes/parcel_3d.tscn")
+const SPACING = 3.5
 
 # Diccionario global de parcelas activas
-# Estructura: { parcel_id (int): {"humidity": float, "temperature": float, "ph": float, "alerta_estado": String, "node_instance": Node3D} }
+# Estructura: { parcel_id (int): {"farmer_id": int, "humidity": float, "temperature": float, "ph": float, "alerta_estado": String, "node_instance": Node3D} }
 var active_parcels: Dictionary = {}
 
 
@@ -30,22 +31,34 @@ func _ready() -> void:
 		printerr("[SimulationManager] ERROR: No se pudo localizar el nodo 'NetworkManager' en el árbol de escenas.")
 
 
-func _on_parcel_telemetry_received(parcel_id: int, humidity: float, temperature: float, ph: float) -> void:
+func _on_parcel_telemetry_received(parcel_id: int, farmer_id: int, humidity: float, temperature: float, ph: float) -> void:
 	var alerta = _calcular_alerta(humidity)
 	
 	# Verificar si la parcela ya está registrada en el diccionario de simulación
 	if not active_parcels.has(parcel_id):
-		print("[SimulationManager] Nueva parcela detectada en red. Registrando ID: ", parcel_id)
+		print("[SimulationManager] Nueva parcela detectada en red. Registrando ID: ", parcel_id, " (Farmer ID: ", farmer_id, ")")
+		
+		# Calcular índices locales para posicionar en un tablero de 2x2 por Farmer
+		var local_index = (parcel_id - 1) % 4
+		var col_local = local_index % 2
+		var row_local = int(local_index / 2)
+		
+		# Separar los mini-tableros de cada Farmer por un pasillo de 10 unidades en el eje Z
+		var zona_offset_z = (farmer_id - 1) * 10.0
 		
 		# Instanciar el bloque 3D en la grilla
 		var nueva_parcela = PARCEL_SCENE.instantiate()
 		nueva_parcela.parcel_id = parcel_id
-		# Posicionamiento simple en el eje X para evitar solapamientos
-		nueva_parcela.position.x = parcel_id * 2.5
+		
+		# Aplicar el posicionamiento en la grilla
+		nueva_parcela.position.x = col_local * SPACING
+		nueva_parcela.position.z = (row_local * SPACING) + zona_offset_z
+		nueva_parcela.position.y = 0.0
 		add_child(nueva_parcela)
 		
 		# Registrar en memoria
 		active_parcels[parcel_id] = {
+			"farmer_id": farmer_id,
 			"humidity": humidity,
 			"temperature": temperature,
 			"ph": ph,
@@ -55,6 +68,7 @@ func _on_parcel_telemetry_received(parcel_id: int, humidity: float, temperature:
 		
 	else:
 		# Si ya existe, simplemente actualizamos sus lecturas y estado de alerta
+		active_parcels[parcel_id]["farmer_id"] = farmer_id
 		active_parcels[parcel_id]["humidity"] = humidity
 		active_parcels[parcel_id]["temperature"] = temperature
 		active_parcels[parcel_id]["ph"] = ph
