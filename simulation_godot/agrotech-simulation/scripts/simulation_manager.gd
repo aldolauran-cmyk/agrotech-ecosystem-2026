@@ -1,7 +1,9 @@
 extends Node
 
+const PARCEL_SCENE = preload("res://scenes/parcel_3d.tscn")
+
 # Diccionario global de parcelas activas
-# Estructura: { parcel_id (int): {"humidity": float, "temperature": float, "ph": float} }
+# Estructura: { parcel_id (int): {"humidity": float, "temperature": float, "ph": float, "alerta_estado": String, "node_instance": Node3D} }
 var active_parcels: Dictionary = {}
 
 
@@ -35,15 +37,21 @@ func _on_parcel_telemetry_received(parcel_id: int, humidity: float, temperature:
 	if not active_parcels.has(parcel_id):
 		print("[SimulationManager] Nueva parcela detectada en red. Registrando ID: ", parcel_id)
 		
+		# Instanciar el bloque 3D en la grilla
+		var nueva_parcela = PARCEL_SCENE.instantiate()
+		nueva_parcela.parcel_id = parcel_id
+		# Posicionamiento simple en el eje X para evitar solapamientos
+		nueva_parcela.position.x = parcel_id * 2.5
+		add_child(nueva_parcela)
+		
 		# Registrar en memoria
 		active_parcels[parcel_id] = {
 			"humidity": humidity,
 			"temperature": temperature,
 			"ph": ph,
-			"alerta_estado": alerta
+			"alerta_estado": alerta,
+			"node_instance": nueva_parcela
 		}
-		
-		# TODO: Instanciar el bloque 3D en la grilla
 		
 	else:
 		# Si ya existe, simplemente actualizamos sus lecturas y estado de alerta
@@ -51,6 +59,10 @@ func _on_parcel_telemetry_received(parcel_id: int, humidity: float, temperature:
 		active_parcels[parcel_id]["temperature"] = temperature
 		active_parcels[parcel_id]["ph"] = ph
 		active_parcels[parcel_id]["alerta_estado"] = alerta
+		
+	# Actualizar las propiedades físicas de la instancia 3D
+	if active_parcels[parcel_id]["node_instance"] != null:
+		active_parcels[parcel_id]["node_instance"].update_properties(humidity, temperature, ph, alerta)
 		
 	# Imprimir el estado actual en memoria RAM de la parcela para auditoría en consola
 	print("[SimulationManager] Estado actualizado de Parcela ", parcel_id, " -> Humedad: ", humidity, "% | Temp: ", temperature, "°C | pH: ", ph, " | Alerta: [", alerta, "]")
