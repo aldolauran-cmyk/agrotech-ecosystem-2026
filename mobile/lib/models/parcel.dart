@@ -1,7 +1,8 @@
 class Parcel {
   final int id;
   final String name;
-  final String location;
+  final String ubicacionGrilla;
+  final String ubicacionReferencial;
   final String soilType;
   final int ownerId;    
   final double moisture;      // Humedad del suelo (%)
@@ -12,7 +13,8 @@ class Parcel {
   Parcel({
     required this.id,
     required this.name,
-    required this.location,
+    required this.ubicacionGrilla,
+    required this.ubicacionReferencial,
     required this.soilType,
     required this.ownerId,
     required this.moisture,
@@ -26,7 +28,8 @@ class Parcel {
     return Parcel(
       id: json['id'] as int,
       name: json['name'] as String,
-      location: json['location'] as String,
+      ubicacionGrilla: json['ubicacion_grilla'] as String? ?? "0,0",
+      ubicacionReferencial: json['ubicacion_referencial'] as String? ?? "",
       soilType: json['soil_type'] as String,
       ownerId: json['owner_id'] as int,
       

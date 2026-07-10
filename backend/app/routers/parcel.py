@@ -51,7 +51,8 @@ def create_parcel(
         owner_id = owner.id
     new_parcel = Parcel(
         name=parcel.name,
-        location=parcel.location,
+        ubicacion_grilla=parcel.ubicacion_grilla,
+        ubicacion_referencial=parcel.ubicacion_referencial,
         soil_type=parcel.soil_type,
         owner_id=owner_id,
     )
@@ -91,8 +92,10 @@ def update_parcel(
 
     if parcel_data.name is not None:
         parcel.name = parcel_data.name
-    if parcel_data.location is not None:
-        parcel.location = parcel_data.location
+    if parcel_data.ubicacion_grilla is not None:
+        parcel.ubicacion_grilla = parcel_data.ubicacion_grilla
+    if parcel_data.ubicacion_referencial is not None:
+        parcel.ubicacion_referencial = parcel_data.ubicacion_referencial
     if parcel_data.soil_type is not None:
         parcel.soil_type = parcel_data.soil_type
 

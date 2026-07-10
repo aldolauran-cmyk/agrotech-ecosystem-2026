@@ -181,7 +181,14 @@ class _ParcelDetailScreenState extends State<ParcelDetailScreen> {
                       children: [
                         const Icon(Icons.location_on_rounded, color: Color(0xFF1B4314), size: 18),
                         const SizedBox(width: 8),
-                        Text(widget.parcel.location, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        Expanded(
+                          child: Text(
+                            '${widget.parcel.ubicacionReferencial} (Grilla: ${widget.parcel.ubicacionGrilla})',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),

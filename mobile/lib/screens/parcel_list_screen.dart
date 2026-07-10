@@ -173,7 +173,8 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
 
   void _showCreateParcelDialog() {
     final nameController = TextEditingController();
-    final locationController = TextEditingController();
+    final ubicacionGrillaController = TextEditingController();
+    final ubicacionReferencialController = TextEditingController();
     final soilTypeController = TextEditingController();
     // null = asignar al admin (por defecto), int = ID del usuario seleccionado
     int? selectedOwnerId;
@@ -201,8 +202,18 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                       decoration: const InputDecoration(labelText: 'Nombre de la Parcela'),
                     ),
                     TextField(
-                      controller: locationController,
-                      decoration: const InputDecoration(labelText: 'Ubicación'),
+                      controller: ubicacionGrillaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ubicación Grilla 3D (ej: 2,-5)',
+                        hintText: 'X,Z',
+                      ),
+                    ),
+                    TextField(
+                      controller: ubicacionReferencialController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ubicación Referencial (ej: Santa Anita)',
+                        hintText: 'Distrito, Provincia o Referencia',
+                      ),
                     ),
                     TextField(
                       controller: soilTypeController,
@@ -218,50 +229,32 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                           const Icon(Icons.admin_panel_settings_rounded, size: 16, color: Color(0xFF1B4314)),
                           const SizedBox(width: 6),
                           Text(
-                            'Opciones de Administrador',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w600),
+                            selectedOwnerId == null
+                                ? 'Dueño: Admin (yo mismo)'
+                                : 'Dueño: Asignado a Farmer',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B4314)),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      assignableUsers.isEmpty
-                          ? Text(
-                              'No hay usuarios a quién asignar.\nCrea usuarios desde "Gestión de Usuarios".',
-                              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                            )
-                          : DropdownButtonFormField<int?>(
-                              value: selectedOwnerId,
-                              decoration: const InputDecoration(
-                                labelText: 'Asignar a usuario',
-                                prefixIcon: Icon(Icons.person_outline_rounded, size: 20),
-                              ),
-                              items: [
-                                const DropdownMenuItem<int?>(
-                                  value: null,
-                                  child: Text('Admin (yo mismo)', style: TextStyle(color: Colors.grey)),
-                                ),
-                                ...assignableUsers.map((u) {
-                                  final role = u['role'] as String? ?? '';
-                                  return DropdownMenuItem<int?>(
-                                    value: u['id'] as int,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          role == 'farmer' ? Icons.agriculture_rounded : Icons.visibility_rounded,
-                                          size: 16,
-                                          color: role == 'farmer' ? const Color(0xFF2E86C1) : const Color(0xFF8E44AD),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text('${u['username']} '),
-                                        Text('(${role.toUpperCase()})',
-                                            style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ],
-                              onChanged: (val) => setDialogState(() => selectedOwnerId = val),
-                            ),
+                      const SizedBox(height: 8),
+                      DropdownButton<int?>(
+                        value: selectedOwnerId,
+                        hint: const Text('Seleccionar Farmer propietario'),
+                        isExpanded: true,
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('Admin (yo mismo)'),
+                          ),
+                          ...assignableUsers.map((u) {
+                            return DropdownMenuItem<int?>(
+                              value: u['id'] as int,
+                              child: Text('${u['username']} (Farmer)'),
+                            );
+                          }),
+                        ],
+                        onChanged: (val) => setDialogState(() => selectedOwnerId = val),
+                      ),
                     ],
                   ],
                 ),
@@ -275,19 +268,29 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6043)),
                   onPressed: () async {
                     final name = nameController.text.trim();
-                    final location = locationController.text.trim();
+                    final ubicacionGrilla = ubicacionGrillaController.text.trim();
+                    final ubicacionReferencial = ubicacionReferencialController.text.trim();
                     final soilType = soilTypeController.text.trim();
 
-                    if (name.isEmpty || location.isEmpty || soilType.isEmpty) {
+                    if (name.isEmpty || ubicacionGrilla.isEmpty || ubicacionReferencial.isEmpty || soilType.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Por favor, completa todos los campos')),
                       );
                       return;
                     }
 
+                    final gridRegex = RegExp(r"^-?\d+,-?\d+$");
+                    if (!gridRegex.hasMatch(ubicacionGrilla)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('La ubicación de grilla debe tener el formato X,Z (ej: 2,-5)')),
+                      );
+                      return;
+                    }
+
                     final Map<String, dynamic> payload = {
                       'name': name,
-                      'location': location,
+                      'ubicacion_grilla': ubicacionGrilla,
+                      'ubicacion_referencial': ubicacionReferencial,
                       'soil_type': soilType,
                     };
 
@@ -338,7 +341,8 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
 
   void _showEditParcelDialog(Parcel parcel) {
     final nameController = TextEditingController(text: parcel.name);
-    final locationController = TextEditingController(text: parcel.location);
+    final ubicacionGrillaController = TextEditingController(text: parcel.ubicacionGrilla);
+    final ubicacionReferencialController = TextEditingController(text: parcel.ubicacionReferencial);
     final soilTypeController = TextEditingController(text: parcel.soilType);
     
     final assignableUsers = _allUsers.where((u) => u['role'] != 'admin').toList();
@@ -369,8 +373,18 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                       decoration: const InputDecoration(labelText: 'Nombre de la Parcela'),
                     ),
                     TextField(
-                      controller: locationController,
-                      decoration: const InputDecoration(labelText: 'Ubicación'),
+                      controller: ubicacionGrillaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ubicación Grilla 3D (ej: 2,-5)',
+                        hintText: 'X,Z',
+                      ),
+                    ),
+                    TextField(
+                      controller: ubicacionReferencialController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ubicación Referencial (ej: Santa Anita)',
+                        hintText: 'Distrito, Provincia o Referencia',
+                      ),
                     ),
                     TextField(
                       controller: soilTypeController,
@@ -442,19 +456,29 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6043)),
                   onPressed: () async {
                     final name = nameController.text.trim();
-                    final location = locationController.text.trim();
+                    final ubicacionGrilla = ubicacionGrillaController.text.trim();
+                    final ubicacionReferencial = ubicacionReferencialController.text.trim();
                     final soilType = soilTypeController.text.trim();
 
-                    if (name.isEmpty || location.isEmpty || soilType.isEmpty) {
+                    if (name.isEmpty || ubicacionGrilla.isEmpty || ubicacionReferencial.isEmpty || soilType.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Por favor, completa todos los campos')),
                       );
                       return;
                     }
 
+                    final gridRegex = RegExp(r"^-?\d+,-?\d+$");
+                    if (!gridRegex.hasMatch(ubicacionGrilla)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('La ubicación de grilla debe tener el formato X,Z (ej: 2,-5)')),
+                      );
+                      return;
+                    }
+
                     final Map<String, dynamic> payload = {
                       'name': name,
-                      'location': location,
+                      'ubicacion_grilla': ubicacionGrilla,
+                      'ubicacion_referencial': ubicacionReferencial,
                       'soil_type': soilType,
                     };
 
@@ -790,7 +814,7 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                               const SizedBox(width: 6),
                                               Expanded(
                                                 child: Text(
-                                                  parcel.location,
+                                                  '${parcel.ubicacionReferencial} [Grilla: ${parcel.ubicacionGrilla}]',
                                                   style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500),
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,

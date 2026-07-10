@@ -63,7 +63,8 @@ def garantizar_parcela_existente(headers):
             print("No se encontraron parcelas. Creando 'Parcela Demostración 1'...")
             nueva_parcela = {
                 "name": "Parcela Demostración 1",
-                "location": "Sector Norte - Lote A",
+                "ubicacion_grilla": "0,0",
+                "ubicacion_referencial": "Sector Norte - Lote A",
                 "soil_type": "Franco-Arcilloso"
             }
             create_resp = requests.post(
