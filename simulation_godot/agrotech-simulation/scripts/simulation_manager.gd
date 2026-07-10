@@ -4,7 +4,7 @@ const PARCEL_SCENE = preload("res://scenes/parcel_3d.tscn")
 const SPACING = 3.5
 
 # Diccionario global de parcelas activas
-# Estructura: { parcel_id (int): {"farmer_id": int, "humidity": float, "temperature": float, "ph": float, "alerta_estado": String, "node_instance": Node3D} }
+# Estructura: { parcel_id (int): {"farmer_username": String, "humidity": float, "temperature": float, "ph": float, "alerta_estado": String, "node_instance": Node3D} }
 var active_parcels: Dictionary = {}
 
 
@@ -31,12 +31,15 @@ func _ready() -> void:
 		printerr("[SimulationManager] ERROR: No se pudo localizar el nodo 'NetworkManager' en el árbol de escenas.")
 
 
-func _on_parcel_telemetry_received(parcel_id: int, farmer_id: int, humidity: float, temperature: float, ph: float) -> void:
+func _on_parcel_telemetry_received(parcel_id: int, farmer_username: String, humidity: float, temperature: float, ph: float) -> void:
 	var alerta = _calcular_alerta(humidity)
+	
+	# Determinar el farmer_id de forma matemática para colocarlo en la cuadrícula de su respectiva zona
+	var farmer_id = int((parcel_id - 1) / 4) + 1
 	
 	# Verificar si la parcela ya está registrada en el diccionario de simulación
 	if not active_parcels.has(parcel_id):
-		print("[SimulationManager] Nueva parcela detectada en red. Registrando ID: ", parcel_id, " (Farmer ID: ", farmer_id, ")")
+		print("[SimulationManager] Nueva parcela detectada en red. Registrando ID: ", parcel_id, " (Farmer: ", farmer_username, ")")
 		
 		# Calcular índices locales para posicionar en un tablero de 2x2 por Farmer
 		var local_index = (parcel_id - 1) % 4
@@ -58,7 +61,7 @@ func _on_parcel_telemetry_received(parcel_id: int, farmer_id: int, humidity: flo
 		
 		# Registrar en memoria
 		active_parcels[parcel_id] = {
-			"farmer_id": farmer_id,
+			"farmer_username": farmer_username,
 			"humidity": humidity,
 			"temperature": temperature,
 			"ph": ph,
@@ -68,7 +71,7 @@ func _on_parcel_telemetry_received(parcel_id: int, farmer_id: int, humidity: flo
 		
 	else:
 		# Si ya existe, simplemente actualizamos sus lecturas y estado de alerta
-		active_parcels[parcel_id]["farmer_id"] = farmer_id
+		active_parcels[parcel_id]["farmer_username"] = farmer_username
 		active_parcels[parcel_id]["humidity"] = humidity
 		active_parcels[parcel_id]["temperature"] = temperature
 		active_parcels[parcel_id]["ph"] = ph
@@ -76,7 +79,7 @@ func _on_parcel_telemetry_received(parcel_id: int, farmer_id: int, humidity: flo
 		
 	# Actualizar las propiedades físicas de la instancia 3D
 	if active_parcels[parcel_id]["node_instance"] != null:
-		active_parcels[parcel_id]["node_instance"].update_properties(humidity, temperature, ph, alerta, farmer_id)
+		active_parcels[parcel_id]["node_instance"].update_properties(humidity, temperature, ph, alerta, farmer_username)
 		
 	# Imprimir el estado actual en memoria RAM de la parcela para auditoría en consola
 	print("[SimulationManager] Estado actualizado de Parcela ", parcel_id, " -> Humedad: ", humidity, "% | Temp: ", temperature, "°C | pH: ", ph, " | Alerta: [", alerta, "]")

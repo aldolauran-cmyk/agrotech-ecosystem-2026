@@ -7,8 +7,13 @@ from backend.app.models.parcel import Parcel
 from backend.app.models.user import User
 from backend.app.schemas.parcel import ParcelCreate, ParcelUpdate, ParcelResponse
 
-# Quitamos el prefijo local para evitar la duplicación con main.py
 router = APIRouter(tags=["Parcels"])
+
+
+@router.get("/parcels/public/owners", summary="Obtener mapa público de parcelas y dueños")
+def get_public_owners(db: Session = Depends(get_db)):
+    parcels = db.query(Parcel).all()
+    return {str(p.id): p.owner.username for p in parcels if p.owner}
 
 
 @router.get("/parcels", response_model=list[ParcelResponse], summary="Listar parcelas")

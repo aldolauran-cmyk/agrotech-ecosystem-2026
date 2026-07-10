@@ -1,10 +1,13 @@
 extends Node3D
 
 # Señal personalizada con tipado explícito
-signal telemetry_received(parcel_id: int, farmer_id: int, humidity: float, temperature: float, ph: float)
+signal telemetry_received(parcel_id: int, farmer_username: String, humidity: float, temperature: float, ph: float)
 
 # Instancia del cliente MQTT
 var mqtt_client: Node
+
+# Diccionario para almacenar el mapeo público de parcel_id (int) -> owner_username (String)
+var parcel_owners: Dictionary = {}
 
 
 func _ready() -> void:
@@ -18,10 +21,42 @@ func _ready() -> void:
 	mqtt_client.broker_connected.connect(_on_broker_connected)
 	mqtt_client.broker_connection_failed.connect(_on_broker_connection_failed)
 	
+	# Consultar el mapeo público de agricultores/parcelas desde la API REST
+	_fetch_owners_mapping()
+	
 	# Iniciar conexión al Broker público de HiveMQ en puerto 1883
 	var broker_url = "tcp://broker.hivemq.com:1883"
 	print("[NetworkManager] Conectando al Broker MQTT: ", broker_url)
 	mqtt_client.connect_to_broker(broker_url)
+
+
+func _fetch_owners_mapping() -> void:
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
+	http_request.request_completed.connect(self._on_owners_request_completed)
+	
+	var api_url = "http://127.0.0.1:8000/api/v1/parcels/public/owners"
+	print("[NetworkManager] Cargando mapa de agricultores desde API: ", api_url)
+	var err = http_request.request(api_url)
+	if err != OK:
+		printerr("[NetworkManager] ERROR: No se pudo iniciar la petición HTTP a la API.")
+
+
+func _on_owners_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+	if response_code == 200:
+		var json = JSON.new()
+		var parse_err = json.parse(body.get_string_from_utf8())
+		if parse_err == OK and json.data is Dictionary:
+			var dict = json.data as Dictionary
+			for key in dict.keys():
+				var pid = int(key)
+				var username = str(dict[key])
+				parcel_owners[pid] = username
+			print("[NetworkManager] Mapa de dueños cargado con éxito desde el Backend: ", parcel_owners)
+		else:
+			printerr("[NetworkManager] ERROR: Falló el parseo de datos de agricultores.")
+	else:
+		printerr("[NetworkManager] ERROR: API de agricultores respondió con código ", response_code)
 
 
 func _on_broker_connected() -> void:
@@ -62,12 +97,14 @@ func _on_mqtt_message(topic: String, message: String) -> void:
 			if json_data.has("ph") and json_data["ph"] != null:
 				ph = float(json_data["ph"])
 			
-			# Determinar el farmer_id de forma matemática (4 parcelas por mini-tablero de Farmer)
-			var farmer_id = int((parcel_id - 1) / 4) + 1
-
+			# Determinar el nombre de usuario del agricultor (resolución dinámica o matemática)
+			var farmer_username = "farmer" + str(int((parcel_id - 1) / 4) + 1)
+			if parcel_owners.has(parcel_id):
+				farmer_username = parcel_owners[parcel_id]
+			
 			# Emitir la señal personalizada para notificar a los nodos 3D de la simulación
-			telemetry_received.emit(parcel_id, farmer_id, humidity, temperature, ph)
-			print("[NetworkManager] Señal telemetry_received emitida. ID: ", parcel_id, " | Farmer: ", farmer_id, " | H: ", humidity, "% | T: ", temperature, "°C | pH: ", ph)
+			telemetry_received.emit(parcel_id, farmer_username, humidity, temperature, ph)
+			print("[NetworkManager] Señal telemetry_received emitida. ID: ", parcel_id, " | Farmer: ", farmer_username, " | H: ", humidity, "% | T: ", temperature, "°C | pH: ", ph)
 		else:
 			printerr("[NetworkManager] ERROR: Falló la deserialización JSON o el formato no es un diccionario.")
 	else:

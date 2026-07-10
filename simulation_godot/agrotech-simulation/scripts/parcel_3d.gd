@@ -6,16 +6,16 @@ var current_state: String = "OPTIMO"
 
 
 # Función pública para actualizar las propiedades, comportamiento visual y textos en 3D
-func update_properties(humidity: float, temperature: float, ph: float, alerta_estado: String, farmer_id: int) -> void:
+func update_properties(humidity: float, temperature: float, ph: float, alerta_estado: String, farmer_username: String) -> void:
 	current_state = alerta_estado
 	
 	# 1. Buscar y actualizar el texto de Label3D para visualización en tiempo real
 	var label = get_node_or_null("Label3D") as Label3D
 	if label:
 		# Formato multilínea redondeando floats a un decimal para limpieza visual
-		label.text = "Parcela: %d\nFarmer: farmer%d\nHumedad: %.1f%%\nTemp: %.1f°C\npH: %.1f" % [
+		label.text = "Parcela: %d\nFarmer: %s\nHumedad: %.1f%%\nTemp: %.1f°C\npH: %.1f" % [
 			parcel_id,
-			farmer_id,
+			farmer_username,
 			humidity,
 			temperature,
 			ph
