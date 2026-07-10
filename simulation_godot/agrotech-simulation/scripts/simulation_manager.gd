@@ -76,7 +76,7 @@ func _on_parcel_telemetry_received(parcel_id: int, farmer_id: int, humidity: flo
 		
 	# Actualizar las propiedades físicas de la instancia 3D
 	if active_parcels[parcel_id]["node_instance"] != null:
-		active_parcels[parcel_id]["node_instance"].update_properties(humidity, temperature, ph, alerta)
+		active_parcels[parcel_id]["node_instance"].update_properties(humidity, temperature, ph, alerta, farmer_id)
 		
 	# Imprimir el estado actual en memoria RAM de la parcela para auditoría en consola
 	print("[SimulationManager] Estado actualizado de Parcela ", parcel_id, " -> Humedad: ", humidity, "% | Temp: ", temperature, "°C | pH: ", ph, " | Alerta: [", alerta, "]")
