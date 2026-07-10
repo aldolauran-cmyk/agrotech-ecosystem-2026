@@ -9,6 +9,9 @@ var mqtt_client: Node
 # Diccionario para almacenar el mapeo público de parcel_id (int) -> owner_username (String)
 var parcel_owners: Dictionary = {}
 
+# Nodo HTTPRequest único para consultas de dueños (evita fugas de memoria)
+var http_owners_request: HTTPRequest
+
 
 func _ready() -> void:
 	# Cargar e instanciar el script de MQTT
@@ -21,8 +24,20 @@ func _ready() -> void:
 	mqtt_client.broker_connected.connect(_on_broker_connected)
 	mqtt_client.broker_connection_failed.connect(_on_broker_connection_failed)
 	
-	# Consultar el mapeo público de agricultores/parcelas desde la API REST
+	# Inicializar el nodo HTTPRequest único
+	http_owners_request = HTTPRequest.new()
+	add_child(http_owners_request)
+	http_owners_request.request_completed.connect(self._on_owners_request_completed)
+	
+	# Consultar el mapeo inicial de agricultores/parcelas desde la API REST
 	_fetch_owners_mapping()
+	
+	# Configurar un Timer para consultar periódicamente el mapeo (cada 3 segundos para reactividad rápida)
+	var timer = Timer.new()
+	timer.wait_time = 3.0
+	timer.autostart = true
+	timer.timeout.connect(_fetch_owners_mapping)
+	add_child(timer)
 	
 	# Iniciar conexión al Broker público de HiveMQ en puerto 1883
 	var broker_url = "tcp://broker.hivemq.com:1883"
@@ -31,13 +46,12 @@ func _ready() -> void:
 
 
 func _fetch_owners_mapping() -> void:
-	var http_request = HTTPRequest.new()
-	add_child(http_request)
-	http_request.request_completed.connect(self._on_owners_request_completed)
-	
+	# Si hay una consulta HTTP en proceso, esperar a que termine para no saturar la red
+	if http_owners_request.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		return
+		
 	var api_url = "http://127.0.0.1:8000/api/v1/parcels/public/owners"
-	print("[NetworkManager] Cargando mapa de agricultores desde API: ", api_url)
-	var err = http_request.request(api_url)
+	var err = http_owners_request.request(api_url)
 	if err != OK:
 		printerr("[NetworkManager] ERROR: No se pudo iniciar la petición HTTP a la API.")
 
@@ -52,7 +66,6 @@ func _on_owners_request_completed(result: int, response_code: int, headers: Pack
 				var pid = int(key)
 				var username = str(dict[key])
 				parcel_owners[pid] = username
-			print("[NetworkManager] Mapa de dueños cargado con éxito desde el Backend: ", parcel_owners)
 		else:
 			printerr("[NetworkManager] ERROR: Falló el parseo de datos de agricultores.")
 	else:
