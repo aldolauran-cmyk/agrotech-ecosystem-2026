@@ -87,24 +87,27 @@ def garantizar_parcela_existente(headers):
         print(f"Advertencia al verificar parcelas: {e}. Se intentará el envío de igual modo.")
 
 
-def procesar_estado_humedad(parcel_id):
-    """Aplica la máquina de estados cíclica de humedad y mantiene estables la temperatura y el pH."""
+def calcular_siguiente_telemetria(parcel_id):
+    """Aplica la máquina de estados cíclica de humedad y genera variaciones leves en temperatura y pH."""
     # Inicialización de la parcela si no está en la máquina de estados
     if parcel_id not in PARCEL_STATES:
         initial_humidity = round(random.uniform(35.0, 65.0), 1)
         initial_state = random.choice(["SECANDO", "REGANDO", "DRENAJE"])
-        initial_temp = random.randint(20, 30)
-        initial_ph = round(random.uniform(6.0, 7.0), 2)
+        # Valores base de temperatura y pH
+        base_temp = random.randint(21, 29)
+        base_ph = round(random.uniform(5.8, 7.2), 2)
         PARCEL_STATES[parcel_id] = {
             "humidity": initial_humidity,
             "state": initial_state,
-            "temperature": initial_temp,
-            "ph": initial_ph
+            "temperature_base": base_temp,
+            "ph_base": base_ph
         }
 
     state_info = PARCEL_STATES[parcel_id]
     current_humidity = state_info["humidity"]
     current_state = state_info["state"]
+    base_temp = state_info["temperature_base"]
+    base_ph = state_info["ph_base"]
 
     # Transiciones de la máquina de estados
     if current_state == "SECANDO":
@@ -129,8 +132,16 @@ def procesar_estado_humedad(parcel_id):
         next_humidity = current_humidity
         next_state = "SECANDO"
 
-    # Acotación matemática entre 0.0 y 100.0 con 1 decimal de precisión
+    # Acotación matemática de humedad entre 0.0 y 100.0 con 1 decimal de precisión
     next_humidity = round(max(0.0, min(100.0, next_humidity)), 1)
+
+    # Variar la temperatura actual en un rango de +/- 0.5 respecto al valor base
+    temp_variation = random.uniform(-0.5, 0.5)
+    next_temp = int(round(max(20.0, min(32.0, base_temp + temp_variation))))
+
+    # Variar el pH actual en un rango de +/- 0.02 respecto al valor base
+    ph_variation = random.uniform(-0.02, 0.02)
+    next_ph = round(max(5.5, min(7.5, base_ph + ph_variation)), 2)
 
     # Actualizar estado global
     PARCEL_STATES[parcel_id]["humidity"] = next_humidity
@@ -138,8 +149,8 @@ def procesar_estado_humedad(parcel_id):
 
     return {
         "humidity": next_humidity,
-        "temperature": PARCEL_STATES[parcel_id]["temperature"],
-        "ph": PARCEL_STATES[parcel_id]["ph"]
+        "temperature": next_temp,
+        "ph": next_ph
     }
 
 
@@ -183,7 +194,7 @@ if __name__ == "__main__":
                 topic = MQTT_TOPIC_TEMPLATE.format(parcel_id=parcel_id)
                 
                 # Obtener la telemetría calculada por la máquina de estados
-                data = procesar_estado_humedad(parcel_id)
+                data = calcular_siguiente_telemetria(parcel_id)
                 
                 try:
                     # Publicar mediante MQTT con QoS 1 (Asegurar entrega)
