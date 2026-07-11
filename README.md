@@ -115,8 +115,8 @@ La simulación interactiva 3D permite visualizar en tiempo real las parcelas ins
 2. **Configuración e Importación:**
    * Abre el lanzador de Godot (Godot Project Manager).
    * Presiona el botón **Importar** (Import) y navega al directorio del monorepo.
-   * Selecciona el archivo `project.godot` ubicado en:
-     `simulation_godot/agrotech-simulation/project.godot`
+   * Selecciona el archivo `project.godot` ubicado directamente en la raíz de la carpeta de simulación:
+     `simulation_godot/project.godot`
    * Haz clic en **Importar y Editar** para abrir el proyecto en el editor.
 3. **Ejecutar la Simulación:**
    * Asegúrate de tener levantado el backend FastAPI.
