@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://dht3oo1wf3rxw"]
+
+[ext_resource type="Script" uid="uid://dgi3pmmbbgxc" path="res://scripts/parcel_3d.gd" id="1_0c763"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_b3whe"]
+
+[node name="Parcel3D" type="MeshInstance3D" unique_id=314154172]
+mesh = SubResource("BoxMesh_b3whe")
+script = ExtResource("1_0c763")

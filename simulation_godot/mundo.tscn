@@ -1,0 +1,129 @@
+[gd_scene load_steps=15 format=3 uid="uid://cyw7tm1vdp6jh"]
+
+[ext_resource type="Script" uid="uid://dj7xk1nsxd7ul" path="res://mundo.gd" id="1_6ba58"]
+[ext_resource type="Texture2D" uid="uid://cvp610irr5qy2" path="res://tierra para gdot.jpg" id="2_lgngo"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_otwa2"]
+albedo_texture = ExtResource("2_lgngo")
+uv1_scale = Vector3(2, 2, 2)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_xwo6f"]
+material = SubResource("StandardMaterial3D_otwa2")
+size = Vector2(20, 20)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lgngo"]
+
+[sub_resource type="Sky" id="Sky_fw4w5"]
+sky_material = SubResource("ProceduralSkyMaterial_lgngo")
+
+[sub_resource type="Environment" id="Environment_otwa2"]
+background_mode = 2
+sky = SubResource("Sky_fw4w5")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6ba58"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lgngo"]
+albedo_color = Color(0.39607844, 0.21960784, 0.23921569, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fw4w5"]
+custom_aabb = AABB(1.5, 0.2, 8, 0, 0, 0)
+size = Vector3(1.5, 0.2, 8)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_6ba58"]
+top_radius = 0.03
+bottom_radius = 0.03
+height = 1.2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fw4w5"]
+albedo_color = Color(1, 0.98833334, 0.95, 1)
+metallic_specular = 0.6
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_otwa2"]
+material = SubResource("StandardMaterial3D_fw4w5")
+size = Vector3(0.2, 0.2, 0.2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6ba58"]
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+bg_color = Color(0.02, 0.02, 0.02, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="Mundo" type="Node3D"]
+script = ExtResource("1_6ba58")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(4.9993205, 0.070126526, -0.043283314, -0.069793604, 4.9993644, 0.03852409, 0.043818124, -0.03791468, 4.9996643, 0, 0, 0)
+mesh = SubResource("PlaneMesh_xwo6f")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.9998643, 0.014025303, -0.008656666, -0.013958724, 0.9998731, 0.007704808, 0.008763624, -0.0075829374, 0.999933, 0, 0, 0)
+mesh = SubResource("PlaneMesh_xwo6f")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.23156647, -0.96773744, 0.09930371, 0.95029974, 0.24686092, 0.1897108, -0.2081044, 0.050437644, 0.9768052, -0.002314061, 0.023546755, -0.013393879)
+light_energy = 2.0
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_otwa2")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(0.87758255, -0.22984886, 0.42073548, 0, 0.87758255, 0.47942555, -0.47942555, -0.4207355, 0.77015114, 66.35099, 77.10655, 125.954666)
+light_energy = 2.0
+
+[node name="Surco1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0.1, 0)
+material_override = SubResource("StandardMaterial3D_6ba58")
+material_overlay = SubResource("StandardMaterial3D_lgngo")
+mesh = SubResource("BoxMesh_fw4w5")
+
+[node name="Surco2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.1, 0)
+material_override = SubResource("StandardMaterial3D_6ba58")
+material_overlay = SubResource("StandardMaterial3D_lgngo")
+mesh = SubResource("BoxMesh_fw4w5")
+
+[node name="EstacionSensor" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="Poste" type="MeshInstance3D" parent="EstacionSensor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("CylinderMesh_6ba58")
+
+[node name="CajaComponentes" type="MeshInstance3D" parent="EstacionSensor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("BoxMesh_otwa2")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="PanelControl" type="PanelContainer" parent="CanvasLayer"]
+offset_right = 300.0
+offset_bottom = 120.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_6ba58")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/PanelControl"]
+layout_mode = 2
+
+[node name="TextoTitulo" type="Label" parent="CanvasLayer/PanelControl/VBoxContainer"]
+layout_mode = 2
+text = "SISTEMA IOT - PARCELA"
+
+[node name="TextoDatos" type="Label" parent="CanvasLayer/PanelControl/VBoxContainer"]
+layout_mode = 2
+text = "Humedad: 25.0%
+
+Estado: Seco"
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9781476, 0.2079117, 0, -0.2079117, 0.9781476, 0, 2.5, 6)
