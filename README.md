@@ -175,3 +175,4 @@ agrotech-ecosystem-2026/
         ├── scripts/    # Lógica de control en GDScript (cámara, red, parcelas)
         └── mqtt/       # Script conector MQTT para Godot
 ```
+
