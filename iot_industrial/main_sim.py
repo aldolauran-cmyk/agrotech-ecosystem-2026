@@ -48,6 +48,16 @@ def obtener_parcelas(headers):
             parcelas = response.json()
             ids = [p["id"] for p in parcelas]
             return ids
+        elif response.status_code == 401:
+            print("[Simulador] Token JWT expirado. Re-autenticando con el backend...")
+            nuevo_token = get_valid_token()
+            if nuevo_token:
+                headers["Authorization"] = f"Bearer {nuevo_token}"
+                # Re-intentar la petición con el nuevo token
+                response = requests.get(f"{BASE_URL}/parcels", headers=headers, timeout=5)
+                if response.status_code == 200:
+                    return [p["id"] for p in response.json()]
+            return []
         else:
             print(f"Error al obtener parcelas: {response.status_code}")
             return []
