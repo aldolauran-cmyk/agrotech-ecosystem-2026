@@ -16,6 +16,11 @@ def get_public_owners(db: Session = Depends(get_db)):
     return {str(p.id): p.owner.username for p in parcels if p.owner}
 
 
+@router.get("/parcels/public", response_model=list[ParcelResponse], summary="Listar parcelas públicamente para visualizadores (como Godot)")
+def list_parcels_public(db: Session = Depends(get_db)):
+    return db.query(Parcel).all()
+
+
 @router.get("/parcels", response_model=list[ParcelResponse], summary="Listar parcelas")
 def list_parcels(
     db: Session = Depends(get_db),

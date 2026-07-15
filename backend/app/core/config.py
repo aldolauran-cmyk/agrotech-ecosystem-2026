@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     admin_password: str = "admin123"
     admin_email: str = "admin@agrotech.com"
 
+    # Opción para activar/desactivar el listener MQTT integrado en el backend
+    enable_mqtt_listener: bool = True
+
     class Config:
         env_file = ".env"
         extra = "ignore"

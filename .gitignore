@@ -12,4 +12,6 @@ build/
 .flutter-plugins-dependencies
 .idea/
 .vscode/
+.gemini/
+.godot/
 

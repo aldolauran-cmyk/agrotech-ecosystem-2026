@@ -105,17 +105,30 @@ En Windows, PowerShell suele bloquear la activación de entornos virtuales por s
 
 ---
 
-### Paso 3: Configurar y Ejecutar el Simulador IoT
-El simulador transmitirá datos de telemetría por MQTT.
-1. Abre una **nueva terminal**, navega a la raíz del proyecto y activa el entorno virtual:
+### Paso 3: Configurar y Ejecutar el Simulador y Bridge IoT
+El simulador transmite los datos de telemetría por MQTT, mientras que el Bridge se encarga de recibirlos, validarlos con Pydantic y guardarlos en el Backend vía HTTP POST seguro.
+
+1. **(Opcional) Configurar Arquitectura Desacoplada**:
+   Para evitar que el backend y el bridge inserten datos al mismo tiempo, puedes desactivar el listener integrado del backend agregando esta línea a tu archivo `.env` en la raíz del proyecto:
+   ```env
+   ENABLE_MQTT_LISTENER=false
+   ```
+
+2. **Ejecutar el Bridge MQTT**:
+   Abre una **nueva terminal**, navega a la raíz del proyecto, activa el entorno virtual e inicia el Bridge:
    ```powershell
    .\.venv\Scripts\Activate.ps1
+   python iot_industrial/mqtt_bridge.py
    ```
-2. Ejecuta el script del simulador:
+   *El Bridge se autenticará con la API, validará los datos de los sensores y reportará alertas de desconexión si una parcela deja de transmitir por más de 30 segundos.*
+
+3. **Ejecutar el Simulador IoT**:
+   Abre una **cuarta terminal**, activa el entorno virtual e inicia el simulador:
    ```powershell
+   .\.venv\Scripts\Activate.ps1
    python iot_industrial/main_sim.py
    ```
-   *El simulador iniciará sesión de forma segura, creará de ser necesario la "Parcela Demostración 1" y empezará a enviar datos de sensores simulados cada 5 segundos al broker local.*
+   *El simulador empezará a transmitir datos de telemetría (humedad, temperatura, pH) al broker cada 5 segundos.*
 
 ---
 

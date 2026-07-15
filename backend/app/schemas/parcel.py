@@ -29,6 +29,7 @@ class ParcelResponse(BaseModel):
     ph: float
     temperature: float
     has_water_stress: bool
+    is_online: bool
 
     class Config:
         from_attributes = True

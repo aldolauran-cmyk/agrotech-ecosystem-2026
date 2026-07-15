@@ -9,6 +9,7 @@ class Parcel {
   final double ph;            // pH del suelo (Acidez)
   final double temperature;   // Temperatura del suelo (°C)
   final bool hasWaterStress;  // Alerta de estrés hídrico crítica
+  final bool isOnline;        // Estado de conexión del sensor
 
   Parcel({
     required this.id,
@@ -21,6 +22,7 @@ class Parcel {
     required this.ph,
     required this.temperature,
     required this.hasWaterStress,
+    required this.isOnline,
   });
 
 // Este es el constructor que convierte el mapa JSON del Backend a un Objeto Flutter
@@ -38,6 +40,7 @@ class Parcel {
       ph: (json['ph'] as num).toDouble(),
       temperature: (json['temperature'] as num).toDouble(),
       hasWaterStress: json['has_water_stress'] as bool? ?? false,   // Si es nulo por defecto es false 
+      isOnline: json['is_online'] as bool? ?? false,
     );
   }
 }

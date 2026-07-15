@@ -808,6 +808,40 @@ class _ParcelListScreenState extends State<ParcelListScreen> {
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: parcel.isOnline ? const Color(0xFFD4EFDF) : const Color(0xFFF2D7D5),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: parcel.isOnline ? const Color(0xFF27AE60).withOpacity(0.5) : const Color(0xFFC0392B).withOpacity(0.5),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Container(
+                                                      width: 6,
+                                                      height: 6,
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color: parcel.isOnline ? const Color(0xFF27AE60) : const Color(0xFFC0392B),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      parcel.isOnline ? 'ONLINE' : 'OFFLINE',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: parcel.isOnline ? const Color(0xFF1E8449) : const Color(0xFF922B21),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                               if (_userRole != 'viewer') ...[
                                                 const SizedBox(width: 8),
                                                 InkWell(

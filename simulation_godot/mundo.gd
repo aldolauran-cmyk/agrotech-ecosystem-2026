@@ -1,7 +1,7 @@
 extends Node3D
 
 # --- CONFIGURACIÓN DE CONEXIÓN ---
-const API_URL_GET = "http://127.0.0.1:8000/api/v1/parcels"
+const API_URL_GET = "http://127.0.0.1:8000/api/v1/parcels/public"
 const TIEMPO_ACTUALIZACION = 2.0 
 
 var temporizador: Timer
@@ -75,6 +75,10 @@ func _process(delta: float) -> void:
 		nodo_dron.look_at(siguiente_punto, Vector3.UP)
 
 func solicitar_datos_api() -> void:
+	# Evitar solicitudes simultáneas si una anterior sigue en curso
+	if http_request.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		return
+
 	var headers = [
 		"Accept: application/json",
 		"Content-Type: application/json"
@@ -83,7 +87,7 @@ func solicitar_datos_api() -> void:
 	if error != OK:
 		generar_datos_simulados()
 
-func _on_api_response(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_api_response(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code == 200:
 		var json = JSON.new()
 		var parse_err = json.parse(body.get_string_from_utf8())
@@ -99,8 +103,8 @@ func _on_api_response(result: int, response_code: int, headers: PackedStringArra
 				generar_datos_simulados()
 				return
 			
-			# MAPEO TOLERANTE MULTIDIOMA
-			humedad_suelo = float(datos_api.get("humidity", datos_api.get("humedad", 50.0)))
+			# MAPEO TOLERANTE MULTIDIOMA (moisture mapeado desde la API)
+			humedad_suelo = float(datos_api.get("moisture", datos_api.get("humidity", datos_api.get("humedad", 50.0))))
 			ph_suelo = float(datos_api.get("ph", 7.0))
 			temperatura_suelo = float(datos_api.get("temperature", datos_api.get("temperatura", 24.0)))
 			estado_parcela = str(datos_api.get("status", datos_api.get("estado", "Activo")))
@@ -355,21 +359,21 @@ func actualizar_gemelo_digital(es_simulado: bool) -> void:
 	mat_neon.emission_energy_multiplier = 9.0
 	
 	if humedad_suelo < 30.0:
-		mat_suelo.albedo_color = Color("8b5a2b")
+		mat_suelo.albedo_color = Color(0.8, 0.1, 0.1) # Rojo (Estrés hídrico)
 		mat_suelo.roughness = 0.95
 		mat_planta.albedo_color = Color(0.95, 0.35, 0.0)
 		mat_planta.roughness = 0.5
 		mat_neon.albedo_color = Color(1.0, 0.02, 0.0)
 		mat_neon.emission = Color(1.0, 0.02, 0.0)
 	elif humedad_suelo > 70.0:
-		mat_suelo.albedo_color = Color("1a2e40")
+		mat_suelo.albedo_color = Color(0.1, 0.4, 0.8) # Azul (Saturado / Inundado)
 		mat_suelo.roughness = 0.2
 		mat_planta.albedo_color = Color(0.6, 0.25, 0.0)
 		mat_planta.roughness = 0.4
 		mat_neon.albedo_color = Color(0.2, 0.2, 1.0)
 		mat_neon.emission = Color(0.2, 0.2, 1.0)
 	else:
-		mat_suelo.albedo_color = Color("2e5a1c")
+		mat_suelo.albedo_color = Color("2e5a1c") # Verde (Óptimo)
 		mat_suelo.roughness = 0.6
 		mat_planta.albedo_color = Color(0.9, 0.4, 0.0)
 		mat_planta.roughness = 0.4

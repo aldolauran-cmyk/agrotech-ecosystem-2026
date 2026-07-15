@@ -1,5 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from backend.app.core.database import Base
 
@@ -39,5 +40,13 @@ class Parcel(Base):
     def has_water_stress(self) -> bool:
         if self.telemetries:
             return self.telemetries[0].humidity < 30.0
+        return False
+
+    @property
+    def is_online(self) -> bool:
+        if self.telemetries:
+            # Consideramos online si ha reportado telemetría en los últimos 30 segundos
+            delta = datetime.utcnow() - self.telemetries[0].timestamp
+            return delta.total_seconds() < 30
         return False
 

@@ -39,11 +39,13 @@ async def lifespan(app: FastAPI):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     seed_admin()
-    # Encendemos el oyente MQTT en segundo plano
-    start_mqtt_listener()
+    # Encendemos el oyente MQTT en segundo plano si está habilitado
+    if settings.enable_mqtt_listener:
+        start_mqtt_listener()
     yield
-    # Apagamos el oyente MQTT de forma segura
-    stop_mqtt_listener()
+    # Apagamos el oyente MQTT de forma segura si está habilitado
+    if settings.enable_mqtt_listener:
+        stop_mqtt_listener()
 
 app = FastAPI(
     title=settings.project_name,
